@@ -6,7 +6,23 @@
   "scripts": {
     "start": "node dist/backend/server.js",
     "dev": "ts-node-dev --respawn --transpile-only src/backend/server.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "deploy": "npm run build && pm2 start ecosystem.config.js --env production",
+    "deploy:dev": "pm2 start ecosystem.config.js --env development",
+    "pm2:start": "pm2 start ecosystem.config.js",
+    "pm2:stop": "pm2 stop whatsapp-message-system",
+    "pm2:restart": "pm2 restart whatsapp-message-system",
+    "pm2:reload": "pm2 reload whatsapp-message-system",
+    "pm2:delete": "pm2 delete whatsapp-message-system",
+    "pm2:logs": "pm2 logs whatsapp-message-system",
+    "pm2:monit": "pm2 monit",
+    "pm2:status": "pm2 status",
+    "setup": "npm install && npm run build && mkdir -p logs uploads",
+    "clean": "rm -rf dist node_modules package-lock.json",
+    "reinstall": "npm run clean && npm install",
+    "health": "curl http://localhost:3000/api/health || echo 'Server not responding'",
+    "backup": "tar -czf backup-$(date +%Y%m%d-%H%M%S).tar.gz .wwebjs_auth .wwebjs_cache .env",
+    "update": "git pull && npm install && npm run build && npm run pm2:restart"
   },
   "keywords": [
     "whatsapp",
