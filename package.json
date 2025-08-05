@@ -1,0 +1,40 @@
+{
+  "name": "markaba-msgsystem",
+  "version": "1.0.0",
+  "description": "WhatsApp Web System for sending messages to groups",
+  "main": "dist/backend/server.js",
+  "scripts": {
+    "start": "node dist/backend/server.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/backend/server.ts",
+    "build": "tsc"
+  },
+  "keywords": [
+    "whatsapp",
+    "messaging",
+    "groups"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/multer": "^2.0.0",
+    "@whiskeysockets/baileys": "^6.7.8",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "fs-extra": "^11.3.0",
+    "libsodium-wrappers": "^0.7.15",
+    "multer": "^2.0.2",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/fs-extra": "^11.0.4",
+    "@types/libsodium-wrappers": "^0.7.14",
+    "@types/node": "^22.7.4",
+    "@types/qrcode": "^1.5.5",
+    "nodemon": "^2.0.22",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.6.3"
+  }
+}
