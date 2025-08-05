@@ -39,18 +39,18 @@ const fs = __importStar(require("fs-extra"));
 const path = __importStar(require("path"));
 const events_1 = require("events");
 class WhatsAppService extends events_1.EventEmitter {
+    socket = null;
+    qrCode = null;
+    isConnected = false;
+    authState = 'DISCONNECTED';
+    favoritesPath = path.join(__dirname, '../../../favorites.json');
+    cachePath = path.join(__dirname, '../../../cachedGroups.json');
+    cacheMaxAge = 5 * 60 * 1000;
+    reconnectAttempts = 0;
+    maxReconnectAttempts = 5;
+    isInitializing = false;
     constructor() {
         super();
-        this.socket = null;
-        this.qrCode = null;
-        this.isConnected = false;
-        this.authState = 'DISCONNECTED';
-        this.favoritesPath = path.join(__dirname, '../../../favorites.json');
-        this.cachePath = path.join(__dirname, '../../../cachedGroups.json');
-        this.cacheMaxAge = 5 * 60 * 1000; // 5 minutes
-        this.reconnectAttempts = 0;
-        this.maxReconnectAttempts = 5;
-        this.isInitializing = false;
     }
     async initialize() {
         try {
@@ -72,7 +72,6 @@ class WhatsAppService extends events_1.EventEmitter {
             this.qrCode = null;
             this.updateAuthState('CONNECTING');
             const { state, saveCreds } = await (0, baileys_1.useMultiFileAuthState)(path.join(__dirname, '../../../.wwebjs_auth'));
-            // Create a simple logger that has the child method
             const logger = {
                 level: 'silent',
                 trace: () => { },
@@ -104,7 +103,6 @@ class WhatsAppService extends events_1.EventEmitter {
                         this.qrCode = await qrcode.toDataURL(qr);
                         this.emit('qr', this.qrCode);
                         console.log('QR code generated successfully');
-                        // Auto-expire QR after 10 minutes
                         setTimeout(() => {
                             if (this.authState === 'QR_REQUIRED') {
                                 this.qrCode = null;
@@ -133,7 +131,7 @@ class WhatsAppService extends events_1.EventEmitter {
                     this.emit('connection', false);
                     if (shouldReconnect) {
                         this.reconnectAttempts++;
-                        const delay = Math.min(30000 * this.reconnectAttempts, 300000); // Max 5 minutes
+                        const delay = Math.min(30000 * this.reconnectAttempts, 300000);
                         console.log(`Reconnecting in ${delay / 1000} seconds (attempt ${this.reconnectAttempts})`);
                         setTimeout(() => this.initialize(), delay);
                     }
@@ -157,7 +155,6 @@ class WhatsAppService extends events_1.EventEmitter {
                     this.reconnectAttempts = 0;
                     this.isInitializing = false;
                     this.emit('connection', true);
-                    // Wait a bit before allowing group fetching
                     setTimeout(() => {
                         console.log('WhatsApp ready for operations');
                     }, 3000);
@@ -229,7 +226,6 @@ class WhatsAppService extends events_1.EventEmitter {
             try {
                 const waitTime = retryCount === 0 ? 15 : (10 + retryCount * 10);
                 await (0, baileys_1.delay)(waitTime * 1000);
-                // Add timeout for the group fetch operation
                 const fetchPromise = this.socket.groupFetchAllParticipating();
                 const timeoutPromise = new Promise((_, reject) => {
                     setTimeout(() => reject(new Error('Group fetch timeout')), 30000);
@@ -260,7 +256,6 @@ class WhatsAppService extends events_1.EventEmitter {
                 console.error(`Error on attempt ${retryCount + 1}:`, err);
                 retryCount++;
                 if (retryCount >= maxRetries) {
-                    // Try to return cached data as fallback if available
                     try {
                         if (await fs.pathExists(this.cachePath)) {
                             const cacheData = await fs.readJson(this.cachePath);
@@ -309,13 +304,11 @@ class WhatsAppService extends events_1.EventEmitter {
             console.log(`Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(groupIds.length / batchSize)}`);
             const batchPromises = batch.map(async (groupId) => {
                 try {
-                    // Validate group ID format
                     if (!groupId.endsWith('@g.us')) {
                         throw new Error('Invalid group ID format');
                     }
                     let messageContent;
                     if (mediaBuffer && mediaType) {
-                        // Send media message with caption
                         if (mediaType.startsWith('image/')) {
                             messageContent = {
                                 image: mediaBuffer,
@@ -335,13 +328,11 @@ class WhatsAppService extends events_1.EventEmitter {
                                 audio: mediaBuffer,
                                 fileName: fileName || 'audio.mp3'
                             };
-                            // Send caption as separate text message for audio
                             if (message.trim()) {
                                 await this.socket.sendMessage(groupId, { text: message.trim() });
                             }
                         }
                         else {
-                            // Send as document for other file types
                             messageContent = {
                                 document: mediaBuffer,
                                 fileName: fileName || 'document',
@@ -350,7 +341,6 @@ class WhatsAppService extends events_1.EventEmitter {
                         }
                     }
                     else {
-                        // Send text message
                         messageContent = { text: message.trim() };
                     }
                     await this.socket.sendMessage(groupId, messageContent);
@@ -365,7 +355,6 @@ class WhatsAppService extends events_1.EventEmitter {
             });
             const batchResults = await Promise.all(batchPromises);
             results.push(...batchResults);
-            // Wait between batches to avoid rate limiting
             if (i + batchSize < groupIds.length) {
                 console.log('Waiting 3 seconds before next batch...');
                 await new Promise(resolve => setTimeout(resolve, 3000));
@@ -393,7 +382,6 @@ class WhatsAppService extends events_1.EventEmitter {
         this.reconnectAttempts = 0;
         console.log('WhatsApp service shutdown complete');
     }
-    // Public methods for routes
     getConnectionStatus() {
         return this.isConnected;
     }

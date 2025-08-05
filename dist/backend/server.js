@@ -9,25 +9,27 @@ const cors_1 = __importDefault(require("cors"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const whatsapp_1 = __importDefault(require("./routes/whatsapp"));
 const whatsappService_1 = __importDefault(require("./services/whatsappService"));
-// Load environment variables
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const PORT = parseInt(process.env.PORT || '3000', 10);
-// Middleware
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
-// Serve static files
-app.use(express_1.default.static(path_1.default.join(__dirname, '../frontend')));
-// API routes
-app.use('/api/whatsapp', whatsapp_1.default);
-// Serve the main HTML file
-app.get('/', (req, res) => {
-    res.sendFile(path_1.default.join(__dirname, '../frontend/index.html'));
+app.use(express_1.default.static(path_1.default.join(__dirname, '../../src/frontend')));
+app.get('/api/health', (req, res) => {
+    res.status(200).json({
+        status: 'OK',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        memory: process.memoryUsage(),
+        version: process.version
+    });
 });
-// Initialize WhatsApp service
+app.use('/api/whatsapp', whatsapp_1.default);
+app.get('/', (req, res) => {
+    res.sendFile(path_1.default.join(__dirname, '../../src/frontend/index.html'));
+});
 whatsappService_1.default.initialize().catch(console.error);
-// Start the server
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });

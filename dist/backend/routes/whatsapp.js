@@ -40,14 +40,12 @@ const express = __importStar(require("express"));
 const multer_1 = __importDefault(require("multer"));
 const whatsappService_1 = __importDefault(require("../services/whatsappService"));
 const router = express.Router();
-// Configure multer for file uploads
 const upload = (0, multer_1.default)({
     storage: multer_1.default.memoryStorage(),
     limits: {
-        fileSize: 50 * 1024 * 1024, // 50MB limit
+        fileSize: 50 * 1024 * 1024,
     },
     fileFilter: (req, file, cb) => {
-        // Allow images, videos, audio, and documents
         const allowedTypes = /jpeg|jpg|png|gif|mp4|avi|mov|mp3|wav|pdf|doc|docx|txt/;
         const extname = allowedTypes.test(file.originalname.toLowerCase());
         const mimetype = allowedTypes.test(file.mimetype);
@@ -59,7 +57,6 @@ const upload = (0, multer_1.default)({
         }
     }
 });
-// Initialize WhatsApp client
 router.post('/init', async (req, res) => {
     try {
         const { forceNew = false } = req.body;
@@ -84,7 +81,6 @@ router.post('/init', async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 });
-// Get status
 router.get('/status', (req, res) => {
     const state = whatsappService_1.default.getState();
     res.json({
@@ -93,7 +89,6 @@ router.get('/status', (req, res) => {
         state: state
     });
 });
-// Get QR code
 router.get('/qr', (req, res) => {
     const qr = whatsappService_1.default.getQR();
     if (qr) {
@@ -103,7 +98,6 @@ router.get('/qr', (req, res) => {
         res.json({ success: false, message: 'QR code not available' });
     }
 });
-// Get groups
 router.get('/groups', async (req, res) => {
     try {
         const groups = await whatsappService_1.default.getGroups();
@@ -114,7 +108,6 @@ router.get('/groups', async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 });
-// Send message to groups (with optional media)
 router.post('/send', upload.single('media'), async (req, res) => {
     try {
         let { groupIds, message, batchSize = 3 } = req.body;
@@ -126,7 +119,6 @@ router.post('/send', upload.single('media'), async (req, res) => {
             hasMedia: !!mediaFile,
             mediaType: mediaFile?.mimetype
         });
-        // Parse groupIds if it's a JSON string (from FormData)
         if (typeof groupIds === 'string') {
             try {
                 groupIds = JSON.parse(groupIds);
@@ -135,7 +127,6 @@ router.post('/send', upload.single('media'), async (req, res) => {
                 return res.status(400).json({ success: false, message: 'Invalid groupIds format' });
             }
         }
-        // Parse batchSize if it's a string (from FormData)
         if (typeof batchSize === 'string') {
             batchSize = parseInt(batchSize, 10) || 3;
         }
@@ -147,12 +138,10 @@ router.post('/send', upload.single('media'), async (req, res) => {
         }
         let results;
         if (mediaFile) {
-            // Send media message
             console.log(`Sending media message: ${mediaFile.originalname} (${mediaFile.mimetype})`);
             results = await whatsappService_1.default.sendMessages(groupIds, message, batchSize, mediaFile.buffer, mediaFile.mimetype, mediaFile.originalname);
         }
         else {
-            // Send text message
             results = await whatsappService_1.default.sendMessages(groupIds, message, batchSize);
         }
         res.json({ success: true, results });
@@ -162,7 +151,6 @@ router.post('/send', upload.single('media'), async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 });
-// Send text-only message (legacy endpoint)
 router.post('/send-text', async (req, res) => {
     try {
         const { groupIds, message, batchSize = 3 } = req.body;
@@ -180,7 +168,6 @@ router.post('/send-text', async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 });
-// Logout
 router.post('/logout', async (req, res) => {
     try {
         await whatsappService_1.default.logout();
@@ -191,7 +178,6 @@ router.post('/logout', async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 });
-// Clear session
 router.post('/auth/clear', async (req, res) => {
     try {
         await whatsappService_1.default.clearSession();
@@ -202,7 +188,6 @@ router.post('/auth/clear', async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 });
-// Save favorite groups
 router.post('/favorites', async (req, res) => {
     try {
         const { groups } = req.body;
@@ -222,7 +207,6 @@ router.post('/favorites', async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 });
-// Load favorite groups
 router.get('/favorites', async (req, res) => {
     try {
         const result = await whatsappService_1.default.getFavoriteGroups();
