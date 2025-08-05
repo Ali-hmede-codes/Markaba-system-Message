@@ -1,7 +1,7 @@
 module.exports = {
   apps: [{
     name: 'whatsapp-message-system',
-    script: './src/backend/server.js',
+    script: './src/backend/server.ts',
     instances: 1,
     autorestart: true,
     watch: false,
