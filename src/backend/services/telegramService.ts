@@ -16,24 +16,33 @@ class TelegramService extends EventEmitter {
   constructor() {
     super();
     this.config = {
-      botToken: '8278027059:AAGEH3PPqRNk-LPUPtV5wAUwdu4FXCXhR20',
-      channelId: '@markaba_news_bot',
-      userId: 989228365
+      botToken: process.env.TELEGRAM_BOT_TOKEN || '',
+      channelId: process.env.TELEGRAM_CHANNEL_ID || '',
+      userId: parseInt(process.env.TELEGRAM_USER_ID || '0')
     };
     this.baseUrl = `https://api.telegram.org/bot${this.config.botToken}`;
   }
 
   async initialize(): Promise<void> {
     try {
+      // Validate configuration
+      if (!this.config.botToken) {
+        throw new Error('TELEGRAM_BOT_TOKEN is not configured in environment variables');
+      }
+      if (!this.config.channelId) {
+        throw new Error('TELEGRAM_CHANNEL_ID is not configured in environment variables');
+      }
+      
       // Test bot connection using fetch
       const response = await this.makeRequest('/getMe');
       
       if (response.ok) {
         this.isConnected = true;
         console.log('✓ Telegram bot connected:', response.result.username);
+        console.log('✓ Telegram channel ID:', this.config.channelId);
         this.emit('connected', true);
       } else {
-        throw new Error('Failed to connect to Telegram bot');
+        throw new Error(`Failed to connect to Telegram bot: ${response.description}`);
       }
     } catch (error) {
       console.error('Telegram connection error:', error);
