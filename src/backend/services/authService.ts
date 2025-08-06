@@ -78,6 +78,7 @@ class AuthService {
 
   async authenticateUser(credentials: LoginCredentials): Promise<User | null> {
     try {
+      console.log('Authenticating user:', credentials.username);
       const sql = `
         SELECT id, username, email, password_hash, full_name, role, is_active, created_at, last_login
         FROM users 
@@ -86,16 +87,20 @@ class AuthService {
       const users = await databaseService.query(sql, [credentials.username]);
       
       if (users.length === 0) {
+        console.log('No user found for username:', credentials.username);
         return null;
       }
 
       const user = users[0];
+      console.log('User found:', user.username, 'Role:', user.role);
       const isValidPassword = await this.verifyPassword(credentials.password, user.password_hash);
       
       if (!isValidPassword) {
+        console.log('Invalid password for user:', user.username);
         return null;
       }
 
+      console.log('Authentication successful for user:', user.username);
       // Update last login
       await this.updateLastLogin(user.id);
 
