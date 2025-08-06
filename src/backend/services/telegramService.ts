@@ -5,7 +5,7 @@ import TelegramBot from 'node-telegram-bot-api';
 
 interface TelegramConfig {
   botToken: string;
-  channelId: string;
+  channelId: number;
   userId: number;
 }
 
@@ -18,7 +18,7 @@ class TelegramService extends EventEmitter {
     super();
     this.config = {
       botToken: process.env.TELEGRAM_BOT_TOKEN || '',
-      channelId: process.env.TELEGRAM_CHANNEL_ID || '',
+      channelId: parseInt(process.env.TELEGRAM_CHANNEL_ID || '0'),
       userId: parseInt(process.env.TELEGRAM_USER_ID || '0')
     };
     
@@ -33,8 +33,8 @@ class TelegramService extends EventEmitter {
   async initialize(): Promise<void> {
     try {
       // Validate configuration
-      if (!this.config.channelId) {
-        throw new Error('TELEGRAM_CHANNEL_ID is not configured in environment variables');
+      if (!this.config.channelId || this.config.channelId === 0) {
+        throw new Error('TELEGRAM_CHANNEL_ID is not configured or invalid in environment variables');
       }
       
       // Test bot connection using node-telegram-bot-api

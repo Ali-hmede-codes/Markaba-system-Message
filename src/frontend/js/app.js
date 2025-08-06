@@ -66,6 +66,9 @@ document.addEventListener('DOMContentLoaded', () => {
     sendMessage();
   });
 
+  // Add Telegram test button listener
+  document.getElementById('telegram-test-btn').addEventListener('click', sendTelegramTestMessage);
+
   // Make fetchGroups globally accessible for retry buttons
   window.fetchGroups = fetchGroups;
 
@@ -513,6 +516,52 @@ document.addEventListener('DOMContentLoaded', () => {
       showSendStatus(`Error: ${error.message}`, 'error');
     } finally {
       sendBtn.disabled = false;
+    }
+  }
+
+  async function sendTelegramTestMessage() {
+    try {
+      const testMessage = document.getElementById('telegram-test-message').value.trim();
+      
+      if (testMessage === '') {
+        alert('Please enter a test message');
+        return;
+      }
+      
+      if (!telegramConnected) {
+        alert('Telegram is not connected. Please check the connection.');
+        return;
+      }
+      
+      const testBtn = document.getElementById('telegram-test-btn');
+      testBtn.disabled = true;
+      testBtn.textContent = 'Sending...';
+      
+      const response = await fetch(`${TELEGRAM_API_BASE_URL}/send`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: testMessage
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        alert('Test message sent to Telegram successfully!');
+        document.getElementById('telegram-test-message').value = '';
+      } else {
+        alert(`Failed to send test message: ${data.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error sending Telegram test message:', error);
+      alert(`Error: ${error.message}`);
+    } finally {
+      const testBtn = document.getElementById('telegram-test-btn');
+      testBtn.disabled = false;
+      testBtn.textContent = 'Send Test Message to Telegram';
     }
   }
 
