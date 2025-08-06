@@ -31,9 +31,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let isConnected = false;
   let authState = 'DISCONNECTED';
   let isAuthenticated = false;
-  let groups = [];
-  let channels = [];
-  let checkInterval;
+   let groups = [];
+   let checkInterval;
   // Removed authInfo - not needed with Baileys
   // Removed refreshInterval - no automatic refresh
 
@@ -199,11 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
               fetchGroups();
               
-              // Auto-fetch channels with a small delay to ensure connection is stable
-              setTimeout(() => {
-                console.log('🚀 Auto-detecting channels after WhatsApp connection...');
-                fetchChannels(true);
-              }, 2000);
+
             }, 3000); // Reduced delay for Baileys
             clearInterval(checkInterval);
           }
@@ -303,8 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Groups loaded:', groups.length);
         renderGroups();
         
-        // Also fetch channels automatically
-        await fetchChannels();
+
       } else {
         console.error('Groups fetch failed:', data.error);
         groupsList.innerHTML = `<div class="error">Error: ${data.error}</div>`;
@@ -315,38 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  async function fetchChannels(forceRefresh = false) {
-    console.log('🔍 Fetching channels from backend...');
-    
-    try {
-      const url = forceRefresh ? '/api/whatsapp/channels?forceRefresh=true' : '/api/whatsapp/channels';
-      const response = await fetch(url);
-      const data = await response.json();
-      
-      console.log('📡 Backend channels response:', data);
-      
-      if (data.success) {
-        channels = data.channels;
-        console.log('\n🎯 FRONTEND CHANNEL DETECTION COMPLETE');
-        console.log('=' .repeat(50));
-        console.log(`📊 Total Channels Received: ${channels.length}`);
-        console.log('📋 Channels Array from Backend:');
-        console.log(JSON.stringify(channels, null, 2));
-        console.log('=' .repeat(50));
-        
-        // Render channels in UI
-        renderChannels();
-      } else {
-        console.error('❌ Channels fetch failed:', data.message);
-        channels = [];
-        console.log('📋 Empty Channels Array: []');
-      }
-    } catch (error) {
-      console.error('❌ Error fetching channels:', error);
-      channels = [];
-      console.log('📋 Empty Channels Array: []');
-    }
-  }
+
 
   function renderGroups() {
     groupsList.innerHTML = '';
@@ -367,99 +330,9 @@ document.addEventListener('DOMContentLoaded', () => {
     groupsList.appendChild(refreshBtn);
   }
 
-  function renderChannels() {
-    const channelsList = document.getElementById('channels-list');
-    if (!channelsList) return;
-    
-    channelsList.innerHTML = '';
-    
-    if (channels.length === 0) {
-      channelsList.innerHTML = '<div class="no-channels">No channels found. Try adding channels manually or check if you have subscribed to any WhatsApp Channels.</div>';
-    } else {
-      channels.forEach(channel => {
-        const div = document.createElement('div');
-        div.className = 'channel-item';
-        div.innerHTML = `
-          <input type="checkbox" id="channel-${channel.id}" value="${channel.id}">
-          <label for="channel-${channel.id}">
-            ${channel.name} ${channel.verified ? '✓' : ''}
-            ${channel.description ? `<br><small>${channel.description}</small>` : ''}
-          </label>
-        `;
-        channelsList.appendChild(div);
-      });
-    }
 
-    // Show channels container
-    const channelsContainer = document.getElementById('channels-container');
-    if (channelsContainer) {
-      channelsContainer.style.display = 'block';
-    }
-  }
 
-  function selectAllChannels() {
-    const channelsList = document.getElementById('channels-list');
-    const checkboxes = channelsList.querySelectorAll('input[type="checkbox"]');
-    checkboxes.forEach(checkbox => checkbox.checked = true);
-  }
 
-  function deselectAllChannels() {
-    const channelsList = document.getElementById('channels-list');
-    const checkboxes = channelsList.querySelectorAll('input[type="checkbox"]');
-    checkboxes.forEach(checkbox => checkbox.checked = false);
-  }
-
-  async function addChannelManually() {
-    const channelIdInput = document.getElementById('channel-id-input');
-    const channelNameInput = document.getElementById('channel-name-input');
-    const channelId = channelIdInput?.value.trim();
-    const channelName = channelNameInput?.value.trim();
-    
-    if (!channelId) {
-      alert('Please enter a channel ID');
-      return;
-    }
-    
-    if (!channelId.endsWith('@newsletter')) {
-      alert('Channel ID must end with @newsletter');
-      return;
-    }
-    
-    try {
-      console.log('🔄 Adding channel manually:', channelId);
-      
-      const response = await fetch('/api/whatsapp/channels/add', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          channelId,
-          name: channelName || undefined
-        })
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        console.log('✅ Channel added successfully');
-        alert('Channel added successfully!');
-        
-        // Clear inputs
-        if (channelIdInput) channelIdInput.value = '';
-        if (channelNameInput) channelNameInput.value = '';
-        
-        // Refresh channels list
-        await fetchChannels(true);
-      } else {
-        console.error('❌ Failed to add channel:', data.message);
-        alert(`Failed to add channel: ${data.message}`);
-      }
-    } catch (error) {
-      console.error('❌ Error adding channel:', error);
-      alert('Error adding channel. Please try again.');
-    }
-  }
 
 
   // Media preview functionality
@@ -588,7 +461,6 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const groupData = await groupResponse.json();
       let groupSuccess = false;
-      let channelSuccess = false;
       
       if (groupData.success) {
         groupSuccess = true;
@@ -604,55 +476,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
       
-      // Send to WhatsApp Channels if available
-      if (channels.length > 0) {
-        try {
-          progressText.textContent = 'Sending to channels...';
-          
-          // Prepare channel form data
-          const channelFormData = new FormData();
-          const channelIds = channels.map(channel => channel.id);
-          channelFormData.append('channelIds', JSON.stringify(channelIds));
-          channelFormData.append('message', message);
-          channelFormData.append('batchSize', '2'); // Smaller batch size for channels
-          
-          if (selectedFile) {
-            channelFormData.append('media', selectedFile);
-          }
-          
-          const channelResponse = await fetch(`${API_BASE_URL}/send-channels`, {
-            method: 'POST',
-            body: channelFormData
-          });
-          
-          const channelData = await channelResponse.json();
-          
-          if (channelData.success) {
-            channelSuccess = true;
-            // Complete the progress bar
-            progressText.textContent = 'Sending to channels completed!';
-            progressFill.style.width = '100%';
-          } else {
-            console.error('Channel sending failed:', channelData.message);
-          }
-        } catch (channelError) {
-          console.error('Error sending to channels:', channelError);
-        }
-      } else {
-        // No channels available, complete progress
-        progressFill.style.width = '100%';
-      }
+      // Complete the progress bar
+      progressFill.style.width = '100%';
       
-      if (groupSuccess || channelSuccess) {
+      if (groupSuccess) {
         const mediaText = selectedFile ? ' with media' : '';
         progressText.textContent = 'All messages sent successfully!';
         
-        // Show comprehensive status
-        let statusParts = [];
-        if (groupSuccess) statusParts.push(`${selectedGroups.length} groups`);
-        if (channelSuccess) statusParts.push(`${channels.length} channels`);
-        
-        let statusMessage = `Message${mediaText} sent to ${statusParts.join(' and ')} successfully!`;
+        let statusMessage = `Message${mediaText} sent to ${selectedGroups.length} groups successfully!`;
         let statusType = 'success';
         
         showSendStatus(statusMessage, statusType);
@@ -676,11 +507,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         progressContainer.style.display = 'none';
         let errorMessage = 'Failed to send message';
-        if (!groupSuccess && !channelSuccess) {
-          errorMessage = `Error: ${groupData.message || 'Unknown error'}`;
-        } else if (!groupSuccess) {
-          errorMessage = `Groups failed: ${groupData.message || 'Unknown error'}`;
-        }
+        errorMessage = `Error: ${groupData.message || 'Unknown error'}`;
         showSendStatus(errorMessage, 'error');
       }
     } catch (error) {

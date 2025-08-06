@@ -109,94 +109,6 @@ router.get('/groups', async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 });
-router.get('/channels', async (req, res) => {
-    try {
-        const forceRefresh = req.query.forceRefresh === 'true';
-        console.log(`🔍 Channels endpoint called with forceRefresh: ${forceRefresh}`);
-        const channels = await whatsappService_1.default.getChannels(forceRefresh);
-        console.log(`📡 Sending ${channels.length} channels to frontend`);
-        res.json({
-            success: true,
-            channels,
-            warning: 'Channel support is experimental and may not work as expected'
-        });
-    }
-    catch (error) {
-        console.error('❌ Error fetching channels:', error);
-        res.status(500).json({ success: false, message: error.message });
-    }
-});
-router.post('/channels/add', async (req, res) => {
-    try {
-        const { channelId, name } = req.body;
-        if (!channelId) {
-            return res.status(400).json({ success: false, message: 'Channel ID is required' });
-        }
-        const success = await whatsappService_1.default.addChannelById(channelId, name);
-        if (success) {
-            res.json({
-                success: true,
-                message: 'Channel added successfully',
-                warning: 'Channel support is experimental and may not work as expected'
-            });
-        }
-        else {
-            res.status(400).json({ success: false, message: 'Failed to add channel' });
-        }
-    }
-    catch (error) {
-        console.error('Error adding channel:', error);
-        res.status(500).json({ success: false, message: error.message });
-    }
-});
-router.post('/send-channels', upload.single('media'), async (req, res) => {
-    try {
-        let { channelIds, message, batchSize = 2 } = req.body;
-        const mediaFile = req.file;
-        console.log('Received channel send request:', {
-            channelIds: typeof channelIds === 'string' ? `JSON string: ${channelIds.substring(0, 100)}...` : channelIds,
-            message: message ? `${message.substring(0, 50)}...` : 'empty',
-            batchSize,
-            hasMedia: !!mediaFile,
-            mediaType: mediaFile?.mimetype
-        });
-        if (typeof channelIds === 'string') {
-            try {
-                channelIds = JSON.parse(channelIds);
-            }
-            catch (parseError) {
-                return res.status(400).json({ success: false, message: 'Invalid channelIds format' });
-            }
-        }
-        if (typeof batchSize === 'string') {
-            batchSize = parseInt(batchSize, 10) || 2;
-        }
-        if (!channelIds || !Array.isArray(channelIds) || channelIds.length === 0) {
-            return res.status(400).json({ success: false, message: 'No channels selected' });
-        }
-        if (!message || message.trim() === '') {
-            return res.status(400).json({ success: false, message: 'Message cannot be empty' });
-        }
-        let results;
-        if (mediaFile) {
-            console.log(`Sending media message to channels: ${mediaFile.originalname} (${mediaFile.mimetype})`);
-            results = await whatsappService_1.default.sendChannelMessages(channelIds, message, batchSize, mediaFile.buffer, mediaFile.mimetype, mediaFile.originalname);
-        }
-        else {
-            results = await whatsappService_1.default.sendChannelMessages(channelIds, message, batchSize);
-        }
-        res.json({
-            success: true,
-            results,
-            warning: 'Channel messaging is experimental and may not work as expected',
-            message: 'Message sent to channels (experimental feature)'
-        });
-    }
-    catch (error) {
-        console.error('Error sending message to channels:', error);
-        res.status(500).json({ success: false, message: error.message });
-    }
-});
 router.post('/send', upload.single('media'), async (req, res) => {
     try {
         let { groupIds, message, batchSize = 3 } = req.body;
@@ -234,30 +146,6 @@ router.post('/send', upload.single('media'), async (req, res) => {
         else {
             whatsappResults = await whatsappService_1.default.sendMessages(groupIds, message, batchSize);
         }
-        let channelResults = null;
-        try {
-            const channels = await whatsappService_1.default.getChannels();
-            if (channels.length > 0) {
-                const channelIds = channels.map(channel => channel.id);
-                console.log(`Auto-sending to ${channelIds.length} channels`);
-                if (mediaFile) {
-                    channelResults = await whatsappService_1.default.sendChannelMessages(channelIds, message, 2, mediaFile.buffer, mediaFile.mimetype, mediaFile.originalname);
-                }
-                else {
-                    channelResults = await whatsappService_1.default.sendChannelMessages(channelIds, message, 2);
-                }
-            }
-            else {
-                channelResults = { success: false, message: 'No channels available' };
-            }
-        }
-        catch (channelError) {
-            console.error('Channel sending failed:', channelError);
-            channelResults = {
-                success: false,
-                error: channelError instanceof Error ? channelError.message : 'Unknown error'
-            };
-        }
         if (telegramService_1.default.getConnectionStatus()) {
             try {
                 if (mediaFile) {
@@ -279,16 +167,12 @@ router.post('/send', upload.single('media'), async (req, res) => {
             telegramResult = { success: false, message: 'Telegram not connected' };
         }
         let responseMessage = 'Message sent to WhatsApp groups';
-        if (Array.isArray(channelResults) && channelResults.some(r => r.success)) {
-            responseMessage += ' and channels';
-        }
         if (telegramResult?.success) {
             responseMessage += ' and Telegram';
         }
         res.json({
             success: true,
             whatsappResults,
-            channelResults,
             telegramResult,
             message: responseMessage
         });
