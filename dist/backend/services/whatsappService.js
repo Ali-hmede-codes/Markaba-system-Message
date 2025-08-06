@@ -310,8 +310,16 @@ class WhatsAppService extends events_1.EventEmitter {
             const channels = [];
             try {
                 const chats = Object.values(this.socket.chats || {});
+                console.log(`DEBUG: Total chats found: ${chats.length}`);
+                console.log('DEBUG: Chat IDs and types:');
+                chats.forEach((chat, index) => {
+                    if (chat && chat.id) {
+                        console.log(`  ${index + 1}. ID: ${chat.id}, Type: ${chat.id.split('@')[1]}, Name: ${chat.name || chat.subject || 'N/A'}`);
+                    }
+                });
                 for (const chat of chats) {
                     if (chat && chat.id && chat.id.endsWith('@newsletter')) {
+                        console.log(`DEBUG: Found newsletter chat: ${chat.id}`);
                         channels.push({
                             id: chat.id,
                             name: chat.name || chat.subject || chat.id.split('@')[0],

@@ -323,16 +323,53 @@ class WhatsAppService extends EventEmitter {
       // Try to get newsletter metadata if available
       try {
         // This is experimental - Baileys may not fully support channels yet
-        // Use a different approach since store.chats.all() is not available
-        const chats = Object.values((this.socket as any).chats || {}) as any[];
+        // Wait longer for chats to sync
+        await delay(5000);
+        
+        // Try multiple approaches to access chats
+        let chats: any[] = [];
+        
+        // Approach 1: Direct socket chats
+        if ((this.socket as any).chats) {
+          chats = Object.values((this.socket as any).chats);
+          console.log(`DEBUG: Found ${chats.length} chats from socket.chats`);
+        }
+        
+        // Approach 2: Try to get from socket store if available
+        if (chats.length === 0 && (this.socket as any).store?.chats) {
+          chats = Object.values((this.socket as any).store.chats);
+          console.log(`DEBUG: Found ${chats.length} chats from socket.store.chats`);
+        }
+        
+        // Approach 3: Try to fetch groups and see if any are newsletters
+        if (chats.length === 0) {
+          try {
+            const groups = await this.socket.groupFetchAllParticipating();
+            chats = Object.values(groups || {});
+            console.log(`DEBUG: Found ${chats.length} chats from groupFetchAllParticipating`);
+          } catch (groupErr) {
+            console.log('DEBUG: groupFetchAllParticipating failed:', groupErr);
+          }
+        }
+        
+        console.log(`DEBUG: Total chats found: ${chats.length}`);
+        console.log('DEBUG: Chat IDs and types:');
+        
+        chats.forEach((chat: any, index: number) => {
+          if (chat && chat.id) {
+            console.log(`  ${index + 1}. ID: ${chat.id}, Type: ${chat.id.split('@')[1]}, Name: ${chat.name || chat.subject || 'N/A'}`);
+          }
+        });
         
         for (const chat of chats) {
-          if (chat && chat.id && chat.id.endsWith('@newsletter')) {
+          const chatObj = chat as any;
+          if (chatObj && chatObj.id && chatObj.id.endsWith('@newsletter')) {
+            console.log(`DEBUG: Found newsletter chat: ${chatObj.id}`);
             channels.push({
-              id: chat.id,
-              name: chat.name || chat.subject || chat.id.split('@')[0],
-              description: chat.description || undefined,
-              verified: chat.verified || false
+              id: chatObj.id,
+              name: chatObj.name || chatObj.subject || chatObj.id.split('@')[0],
+              description: chatObj.description || undefined,
+              verified: chatObj.verified || false
             });
           }
         }
