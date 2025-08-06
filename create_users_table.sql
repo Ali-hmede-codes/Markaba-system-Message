@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 -- Insert default admin user (password: admin123)
 -- Note: In production, use a stronger password
 INSERT INTO `users` (`username`, `email`, `password_hash`, `full_name`, `role`, `is_active`) VALUES
-('admin', 'admin@markaba.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBdXwtO5S7ZOIy', 'System Administrator', 'admin', 1);
+('admin', 'admin@markaba.com', '$2b$12$/fV5e/wSzDa2RHRSc3U09.iSmUVIC/z3jUtF4QVrCN9SDUnGjrPiW', 'System Administrator', 'admin', 1);
 
 -- Create sessions table for session management
 CREATE TABLE IF NOT EXISTS `user_sessions` (

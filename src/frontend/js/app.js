@@ -719,17 +719,22 @@ document.addEventListener('DOMContentLoaded', () => {
   async function handleMainLogout() {
     try {
       const response = await fetch(`${AUTH_API_BASE_URL}/logout`, {
-        method: 'POST'
+        method: 'POST',
+        credentials: 'include'
       });
       
       if (response.ok) {
         // Redirect to login page
-        window.location.href = '/login.html';
+        window.location.href = '/login';
       } else {
         console.error('Logout failed');
+        // Still redirect on error to ensure user is logged out
+        window.location.href = '/login';
       }
     } catch (error) {
       console.error('Error during logout:', error);
+      // Redirect to login even on error
+      window.location.href = '/login';
     }
   }
 });
