@@ -7,6 +7,15 @@ const express_1 = __importDefault(require("express"));
 const authService_1 = __importDefault(require("../services/authService"));
 const auth_1 = require("../middleware/auth");
 const router = express_1.default.Router();
+router.get('/login', (req, res) => {
+    res.json({
+        success: false,
+        message: 'Use POST method for login',
+        endpoint: '/api/auth/login',
+        method: 'POST',
+        required_fields: ['username', 'password']
+    });
+});
 router.post('/login', async (req, res) => {
     try {
         const { username, password, rememberMe } = req.body;

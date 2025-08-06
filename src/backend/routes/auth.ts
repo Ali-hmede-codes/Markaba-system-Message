@@ -5,7 +5,18 @@ import { authenticateUser } from '../middleware/auth';
 
 const router = express.Router();
 
-// Login endpoint
+// Login endpoint (GET for testing)
+router.get('/login', (req: Request, res: Response) => {
+  res.json({
+    success: false,
+    message: 'Use POST method for login',
+    endpoint: '/api/auth/login',
+    method: 'POST',
+    required_fields: ['username', 'password']
+  });
+});
+
+// Login endpoint (POST)
 router.post('/login', async (req: Request, res: Response) => {
   try {
     const { username, password, rememberMe } = req.body;
