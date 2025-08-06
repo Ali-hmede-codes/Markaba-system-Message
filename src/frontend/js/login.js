@@ -88,22 +88,35 @@ async function handleLogin(e) {
             })
         });
         
-        const data = await response.json();
-        
-        if (data.success) {
-            showMessage('Login successful! Redirecting...', 'success');
+        // Check if response is ok before parsing JSON
+        if (response.ok) {
+            const data = await response.json();
             
-            // Redirect after a short delay
-            setTimeout(() => {
-                window.location.href = '/dashboard';
-            }, 1000);
+            if (data.success) {
+                showMessage('تم تسجيل الدخول بنجاح! جاري التحويل...', 'success');
+                
+                // Redirect after a short delay
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 1000);
+            } else {
+                showMessage(data.message || 'فشل تسجيل الدخول', 'error');
+                setLoadingState(false);
+            }
         } else {
-            showMessage(data.message || 'Login failed', 'error');
+            // Handle HTTP error status codes
+            if (response.status === 401) {
+                showMessage('اسم المستخدم أو كلمة المرور غير صحيحة', 'error');
+            } else if (response.status === 500) {
+                showMessage('خطأ في الخادم. يرجى المحاولة لاحقاً', 'error');
+            } else {
+                showMessage('حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى', 'error');
+            }
             setLoadingState(false);
         }
     } catch (error) {
         console.error('Login error:', error);
-        showMessage('Connection error. Please try again.', 'error');
+        showMessage('خطأ في الاتصال. يرجى المحاولة مرة أخرى.', 'error');
         setLoadingState(false);
     }
 }
