@@ -198,6 +198,12 @@ document.addEventListener('DOMContentLoaded', () => {
           if (isConnected && authState === 'READY' && !wasConnected) {
             setTimeout(() => {
               fetchGroups();
+              
+              // Auto-fetch channels with a small delay to ensure connection is stable
+              setTimeout(() => {
+                console.log('🚀 Auto-detecting channels after WhatsApp connection...');
+                fetchChannels(true);
+              }, 2000);
             }, 3000); // Reduced delay for Baileys
             clearInterval(checkInterval);
           }
@@ -309,25 +315,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  async function fetchChannels() {
-    console.log('Fetching channels...');
+  async function fetchChannels(forceRefresh = false) {
+    console.log('🔍 Fetching channels from backend...');
     
     try {
-      const response = await fetch('/api/whatsapp/channels');
+      const url = forceRefresh ? '/api/whatsapp/channels?forceRefresh=true' : '/api/whatsapp/channels';
+      const response = await fetch(url);
       const data = await response.json();
       
-      console.log('Channels response:', data);
+      console.log('📡 Backend channels response:', data);
       
       if (data.success) {
         channels = data.channels;
-        console.log('Channels loaded:', channels.length);
+        console.log('\n🎯 FRONTEND CHANNEL DETECTION COMPLETE');
+        console.log('=' .repeat(50));
+        console.log(`📊 Total Channels Received: ${channels.length}`);
+        console.log('📋 Channels Array from Backend:');
+        console.log(JSON.stringify(channels, null, 2));
+        console.log('=' .repeat(50));
+        
+        // Render channels in UI
+        renderChannels();
       } else {
-        console.error('Channels fetch failed:', data.message);
+        console.error('❌ Channels fetch failed:', data.message);
         channels = [];
+        console.log('📋 Empty Channels Array: []');
       }
     } catch (error) {
-      console.error('Error fetching channels:', error);
+      console.error('❌ Error fetching channels:', error);
       channels = [];
+      console.log('📋 Empty Channels Array: []');
     }
   }
 
@@ -348,6 +365,100 @@ document.addEventListener('DOMContentLoaded', () => {
     refreshBtn.textContent = 'Refresh Groups';
     refreshBtn.onclick = () => fetchGroups(true);
     groupsList.appendChild(refreshBtn);
+  }
+
+  function renderChannels() {
+    const channelsList = document.getElementById('channels-list');
+    if (!channelsList) return;
+    
+    channelsList.innerHTML = '';
+    
+    if (channels.length === 0) {
+      channelsList.innerHTML = '<div class="no-channels">No channels found. Try adding channels manually or check if you have subscribed to any WhatsApp Channels.</div>';
+    } else {
+      channels.forEach(channel => {
+        const div = document.createElement('div');
+        div.className = 'channel-item';
+        div.innerHTML = `
+          <input type="checkbox" id="channel-${channel.id}" value="${channel.id}">
+          <label for="channel-${channel.id}">
+            ${channel.name} ${channel.verified ? '✓' : ''}
+            ${channel.description ? `<br><small>${channel.description}</small>` : ''}
+          </label>
+        `;
+        channelsList.appendChild(div);
+      });
+    }
+
+    // Show channels container
+    const channelsContainer = document.getElementById('channels-container');
+    if (channelsContainer) {
+      channelsContainer.style.display = 'block';
+    }
+  }
+
+  function selectAllChannels() {
+    const channelsList = document.getElementById('channels-list');
+    const checkboxes = channelsList.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(checkbox => checkbox.checked = true);
+  }
+
+  function deselectAllChannels() {
+    const channelsList = document.getElementById('channels-list');
+    const checkboxes = channelsList.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(checkbox => checkbox.checked = false);
+  }
+
+  async function addChannelManually() {
+    const channelIdInput = document.getElementById('channel-id-input');
+    const channelNameInput = document.getElementById('channel-name-input');
+    const channelId = channelIdInput?.value.trim();
+    const channelName = channelNameInput?.value.trim();
+    
+    if (!channelId) {
+      alert('Please enter a channel ID');
+      return;
+    }
+    
+    if (!channelId.endsWith('@newsletter')) {
+      alert('Channel ID must end with @newsletter');
+      return;
+    }
+    
+    try {
+      console.log('🔄 Adding channel manually:', channelId);
+      
+      const response = await fetch('/api/whatsapp/channels/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          channelId,
+          name: channelName || undefined
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        console.log('✅ Channel added successfully');
+        alert('Channel added successfully!');
+        
+        // Clear inputs
+        if (channelIdInput) channelIdInput.value = '';
+        if (channelNameInput) channelNameInput.value = '';
+        
+        // Refresh channels list
+        await fetchChannels(true);
+      } else {
+        console.error('❌ Failed to add channel:', data.message);
+        alert(`Failed to add channel: ${data.message}`);
+      }
+    } catch (error) {
+      console.error('❌ Error adding channel:', error);
+      alert('Error adding channel. Please try again.');
+    }
   }
 
 

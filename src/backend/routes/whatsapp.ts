@@ -88,14 +88,45 @@ router.get('/groups', async (req: Request, res: Response) => {
 // Get channels (experimental)
 router.get('/channels', async (req: Request, res: Response) => {
   try {
-    const channels = await whatsappService.getChannels();
+    const forceRefresh = req.query.forceRefresh === 'true';
+    console.log(`🔍 Channels endpoint called with forceRefresh: ${forceRefresh}`);
+    
+    const channels = await whatsappService.getChannels(forceRefresh);
+    
+    console.log(`📡 Sending ${channels.length} channels to frontend`);
     res.json({ 
       success: true, 
       channels,
       warning: 'Channel support is experimental and may not work as expected'
     });
   } catch (error) {
-    console.error('Error fetching channels:', error);
+    console.error('❌ Error fetching channels:', error);
+    res.status(500).json({ success: false, message: (error as Error).message });
+  }
+});
+
+// Add channel by ID (experimental)
+router.post('/channels/add', async (req: Request, res: Response) => {
+  try {
+    const { channelId, name } = req.body;
+    
+    if (!channelId) {
+      return res.status(400).json({ success: false, message: 'Channel ID is required' });
+    }
+    
+    const success = await whatsappService.addChannelById(channelId, name);
+    
+    if (success) {
+      res.json({ 
+        success: true, 
+        message: 'Channel added successfully',
+        warning: 'Channel support is experimental and may not work as expected'
+      });
+    } else {
+      res.status(400).json({ success: false, message: 'Failed to add channel' });
+    }
+  } catch (error) {
+    console.error('Error adding channel:', error);
     res.status(500).json({ success: false, message: (error as Error).message });
   }
 });

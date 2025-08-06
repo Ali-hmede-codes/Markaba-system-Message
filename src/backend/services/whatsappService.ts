@@ -291,21 +291,99 @@ class WhatsAppService extends EventEmitter {
     }
   }
 
+  async addChannelById(channelId: string, name?: string): Promise<boolean> {
+    if (!channelId.endsWith('@newsletter')) {
+      throw new Error('Invalid channel ID format - must end with @newsletter');
+    }
+
+    try {
+      // Try to get metadata for the channel
+      let channelName = name || channelId.split('@')[0];
+      let description: string | undefined;
+      let verified = false;
+
+      if (typeof (this.socket as any).newsletterMetadata === 'function') {
+        try {
+          const metadata = await (this.socket as any).newsletterMetadata(channelId);
+          channelName = metadata?.name || channelName;
+          description = metadata?.description;
+          verified = metadata?.verified || false;
+        } catch (metaErr) {
+          console.log(`Could not fetch metadata for ${channelId}, using basic info`);
+        }
+      }
+
+      // Load existing cache
+      let cached: any = { channels: [], timestamp: 0 };
+      try {
+        cached = await fs.readJson(this.channelsCachePath);
+      } catch (err) {
+        // Cache doesn't exist, will create new
+      }
+
+      // Check if channel already exists
+      const existingIndex = cached.channels.findIndex((c: any) => c.id === channelId);
+      const newChannel = {
+        id: channelId,
+        name: channelName,
+        description,
+        verified
+      };
+
+      if (existingIndex >= 0) {
+        // Update existing channel
+        cached.channels[existingIndex] = newChannel;
+        console.log(`Updated channel: ${channelId}`);
+      } else {
+        // Add new channel
+        cached.channels.push(newChannel);
+        console.log(`Added new channel: ${channelId}`);
+      }
+
+      // Update cache
+      cached.timestamp = Date.now();
+      await fs.writeJson(this.channelsCachePath, cached);
+      
+      return true;
+    } catch (error) {
+      console.error(`Failed to add channel ${channelId}:`, error);
+      return false;
+    }
+  }
+
   async getChannels(forceRefresh: boolean = false): Promise<Channel[]> {
     if (!this.socket) throw new Error('Socket not initialized');
-
-    // Check cache first
+    
+    console.log('🔍 Starting automatic channel detection...');
+    
+    // Check cache first (unless force refresh)
     if (!forceRefresh) {
       try {
         if (await fs.pathExists(this.channelsCachePath)) {
           const cacheData = await fs.readJson(this.channelsCachePath);
           if (Date.now() - cacheData.timestamp < this.cacheMaxAge && Array.isArray(cacheData.channels)) {
-            console.log(`Returning ${cacheData.channels.length} cached channels (age: ${Math.round((Date.now() - cacheData.timestamp)/1000)}s)`);
+            console.log(`📋 Returning ${cacheData.channels.length} cached channels (age: ${Math.round((Date.now() - cacheData.timestamp)/1000)}s)`);
+            console.log('📊 Cached Channels Array:', JSON.stringify(cacheData.channels, null, 2));
             return cacheData.channels;
           }
         }
       } catch (err) {
-        console.warn('Channels cache load failed:', err);
+        console.warn('⚠️ Channels cache load failed:', err);
+        try {
+          await fs.remove(this.channelsCachePath);
+        } catch (unlinkErr) {
+          console.warn('Could not delete corrupted cache:', unlinkErr);
+        }
+      }
+    } else {
+      // Force refresh - clear cache first
+      try {
+        if (await fs.pathExists(this.channelsCachePath)) {
+          await fs.remove(this.channelsCachePath);
+          console.log('🗑️ Cleared channels cache for force refresh');
+        }
+      } catch (err) {
+        console.warn('⚠️ Failed to clear channels cache:', err);
       }
     }
 
@@ -314,92 +392,179 @@ class WhatsAppService extends EventEmitter {
     }
 
     try {
-      console.log('Fetching WhatsApp channels...');
+      // Wait for socket to be ready
+      console.log('⏳ Waiting for socket to be ready...');
+      await delay(3000);
       
-      // Note: WhatsApp Channels support in Baileys is experimental
-      // This is a workaround to get newsletter/channel information
+      console.log('🔄 Fetching channels from WhatsApp using multiple detection methods...');
+      
       const channels: Channel[] = [];
+      let detectionMethods: string[] = [];
       
-      // Try to get newsletter metadata if available
       try {
-        // This is experimental - Baileys may not fully support channels yet
-        // Wait longer for chats to sync
-        await delay(5000);
-        
-        // Try multiple approaches to access chats
-        let chats: any[] = [];
-        
-        // Approach 1: Direct socket chats
+        // Method 1: Check socket.chats for newsletters
+        console.log('🔍 Method 1: Checking socket.chats for newsletters...');
         if ((this.socket as any).chats) {
-          chats = Object.values((this.socket as any).chats);
-          console.log(`DEBUG: Found ${chats.length} chats from socket.chats`);
-        }
-        
-        // Approach 2: Try to get from socket store if available
-        if (chats.length === 0 && (this.socket as any).store?.chats) {
-          chats = Object.values((this.socket as any).store.chats);
-          console.log(`DEBUG: Found ${chats.length} chats from socket.store.chats`);
-        }
-        
-        // Approach 3: Try to fetch groups and see if any are newsletters
-        if (chats.length === 0) {
-          try {
-            const groups = await this.socket.groupFetchAllParticipating();
-            chats = Object.values(groups || {});
-            console.log(`DEBUG: Found ${chats.length} chats from groupFetchAllParticipating`);
-          } catch (groupErr) {
-            console.log('DEBUG: groupFetchAllParticipating failed:', groupErr);
-          }
-        }
-        
-        console.log(`DEBUG: Total chats found: ${chats.length}`);
-        console.log('DEBUG: Chat IDs and types:');
-        
-        chats.forEach((chat: any, index: number) => {
-          if (chat && chat.id) {
-            console.log(`  ${index + 1}. ID: ${chat.id}, Type: ${chat.id.split('@')[1]}, Name: ${chat.name || chat.subject || 'N/A'}`);
-          }
-        });
-        
-        for (const chat of chats) {
-          const chatObj = chat as any;
-          if (chatObj && chatObj.id && chatObj.id.endsWith('@newsletter')) {
-            console.log(`DEBUG: Found newsletter chat: ${chatObj.id}`);
-            channels.push({
+          const chats = Object.values((this.socket as any).chats);
+          const newsletterChats = chats.filter((chat: any) => 
+            chat && chat.id && chat.id.endsWith('@newsletter')
+          );
+          
+          console.log(`📰 Found ${newsletterChats.length} newsletter chats in socket.chats`);
+          
+          for (const chat of newsletterChats) {
+            const chatObj = chat as any;
+            const channel = {
               id: chatObj.id,
               name: chatObj.name || chatObj.subject || chatObj.id.split('@')[0],
               description: chatObj.description || undefined,
               verified: chatObj.verified || false
-            });
+            };
+            channels.push(channel);
+            console.log(`✅ Added channel from socket.chats:`, channel);
+          }
+          
+          if (newsletterChats.length > 0) {
+            detectionMethods.push('socket.chats');
           }
         }
         
-        console.log(`Found ${channels.length} channels`);
+        // Method 2: Try newsletter metadata approach
+        console.log('🔍 Method 2: Checking newsletter metadata capabilities...');
+        if (typeof (this.socket as any).newsletterMetadata === 'function') {
+          console.log('📡 Newsletter metadata function is available');
+          detectionMethods.push('newsletterMetadata (available)');
+        } else {
+          console.log('❌ Newsletter metadata function not available');
+        }
+        
+        // Method 3: Try groupFetchAllParticipating as fallback
+        console.log('🔍 Method 3: Trying groupFetchAllParticipating...');
+        if (typeof this.socket.groupFetchAllParticipating === 'function') {
+          try {
+            const allGroups = await this.socket.groupFetchAllParticipating();
+            const newsletterGroups = Object.entries(allGroups).filter(([id]) => id.endsWith('@newsletter'));
+            
+            console.log(`📰 Found ${newsletterGroups.length} channels via groupFetchAllParticipating`);
+            
+            for (const [id, group] of newsletterGroups) {
+              // Check if channel already exists
+              if (!channels.find(c => c.id === id)) {
+                const groupObj = group as any;
+                
+                // Try to get detailed metadata
+                let channel: Channel;
+                try {
+                  if (typeof (this.socket as any).newsletterMetadata === 'function') {
+                    const metadata = await (this.socket as any).newsletterMetadata(id);
+                    channel = {
+                      id,
+                      name: metadata?.name || groupObj.subject || id.split('@')[0],
+                      description: metadata?.description || undefined,
+                      verified: metadata?.verified || false
+                    };
+                  } else {
+                    channel = {
+                      id,
+                      name: groupObj.subject || id.split('@')[0],
+                      description: groupObj.desc || undefined,
+                      verified: false
+                    };
+                  }
+                } catch (metaErr) {
+                  // Fallback to basic info
+                  channel = {
+                    id,
+                    name: groupObj.subject || id.split('@')[0],
+                    description: groupObj.desc || undefined,
+                    verified: false
+                  };
+                }
+                
+                channels.push(channel);
+                console.log(`✅ Added channel from groupFetchAllParticipating:`, channel);
+              }
+            }
+            
+            if (newsletterGroups.length > 0) {
+              detectionMethods.push('groupFetchAllParticipating');
+            }
+          } catch (groupErr) {
+            console.log('❌ groupFetchAllParticipating failed:', groupErr);
+          }
+        } else {
+          console.log('❌ groupFetchAllParticipating function not available');
+        }
+        
+        // Method 4: Check socket.store if available
+        console.log('🔍 Method 4: Checking socket.store...');
+        if ((this.socket as any).store && (this.socket as any).store.chats) {
+          try {
+            const storeChats = Object.values((this.socket as any).store.chats);
+            const storeNewsletters = storeChats.filter((chat: any) => 
+              chat && chat.id && chat.id.endsWith('@newsletter')
+            );
+            
+            console.log(`📰 Found ${storeNewsletters.length} newsletters in socket.store.chats`);
+            
+            for (const chat of storeNewsletters) {
+              const chatObj = chat as any;
+              // Check if channel already exists
+              if (!channels.find(c => c.id === chatObj.id)) {
+                const channel = {
+                  id: chatObj.id,
+                  name: chatObj.name || chatObj.subject || chatObj.id.split('@')[0],
+                  description: chatObj.description || undefined,
+                  verified: chatObj.verified || false
+                };
+                channels.push(channel);
+                console.log(`✅ Added channel from socket.store:`, channel);
+              }
+            }
+            
+            if (storeNewsletters.length > 0) {
+              detectionMethods.push('socket.store.chats');
+            }
+          } catch (storeErr) {
+            console.log('❌ socket.store access failed:', storeErr);
+          }
+        } else {
+          console.log('❌ socket.store not available');
+        }
+        
+        // Final results
+        console.log('\n🎯 CHANNEL DETECTION COMPLETE');
+        console.log('=' .repeat(50));
+        console.log(`📊 Total Channels Found: ${channels.length}`);
+        console.log(`🔧 Detection Methods Used: ${detectionMethods.join(', ') || 'None successful'}`);
+        console.log('📋 Channels Array:');
+        console.log(JSON.stringify(channels, null, 2));
+        console.log('=' .repeat(50));
         
         // Cache the results
         const cacheData = {
           channels,
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          detectionMethods
         };
         
         try {
           await fs.writeJson(this.channelsCachePath, cacheData);
-          console.log('Channels cached successfully');
+          console.log('💾 Channels cached successfully');
         } catch (cacheErr) {
-          console.warn('Failed to cache channels:', cacheErr);
+          console.warn('⚠️ Failed to cache channels:', cacheErr);
         }
         
         return channels;
         
       } catch (channelErr) {
-        console.warn('Failed to fetch channels - this feature is experimental:', channelErr);
-        
-        // Return empty array with warning
+        console.warn('⚠️ Failed to fetch channels - this feature is experimental:', channelErr);
+        console.log('📋 Empty Channels Array: []');
         return [];
       }
       
     } catch (error) {
-      console.error('Error fetching channels:', error);
+      console.error('❌ Error fetching channels:', error);
       throw new Error(`Failed to fetch channels: ${(error as Error).message}`);
     }
   }
@@ -575,10 +740,23 @@ class WhatsAppService extends EventEmitter {
             };
           }
           
-          // Attempt to send message to channel
-          // Note: This is experimental and may fail
+          // Use proper newsletter sending method if available
+          let sendResult;
+          
+          // Try newsletter-specific sending first
+          if (typeof (this.socket as any).newsletterSendMessage === 'function') {
+            try {
+              sendResult = await (this.socket as any).newsletterSendMessage(channelId, messageContent);
+              console.log(`✓ ${mediaBuffer ? 'Media m' : 'M'}essage sent to channel ${channelId} via newsletterSendMessage`);
+              return { channelId, success: true };
+            } catch (newsletterErr) {
+              console.log(`Newsletter method failed for ${channelId}, trying standard sendMessage:`, (newsletterErr as Error).message);
+            }
+          }
+          
+          // Fallback to standard sendMessage
           await this.socket!.sendMessage(channelId, messageContent);
-          console.log(`✓ ${mediaBuffer ? 'Media m' : 'M'}essage sent to channel ${channelId}`);
+          console.log(`✓ ${mediaBuffer ? 'Media m' : 'M'}essage sent to channel ${channelId} via sendMessage`);
           return { channelId, success: true };
         } catch (error) {
           const errorMessage = (error as Error).message;
