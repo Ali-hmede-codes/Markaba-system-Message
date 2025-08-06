@@ -12,6 +12,7 @@ import authRoutes from './routes/auth';
 import whatsappService from './services/whatsappService';
 import telegramService from './services/telegramService';
 import databaseService from './services/databaseService';
+import authService from './services/authService';
 import { checkAuth, optionalAuth } from './middleware/auth';
 
 const app: Express = express();
@@ -59,9 +60,31 @@ app.get('/admin', checkAuth, (req: Request, res: Response) => {
   res.sendFile(path.join(__dirname, '../../src/frontend/admin.html'));
 });
 
-// Serve the main HTML file - require authentication
-app.get('/', checkAuth, (req: Request, res: Response) => {
-  res.sendFile(path.join(__dirname, '../../src/frontend/index.html'));
+// Serve the main HTML file - redirect to login if not authenticated
+app.get('/', async (req: Request, res: Response) => {
+  try {
+    const sessionId = req.cookies.session_id;
+    
+    if (!sessionId) {
+      return res.redirect('/login');
+    }
+    
+    // Validate the session
+    const user = await authService.validateSession(sessionId);
+    
+    if (!user) {
+      // Clear invalid session cookie and redirect to login
+      res.clearCookie('session_id');
+      return res.redirect('/login');
+    }
+    
+    // Valid session, serve the main page
+    res.sendFile(path.join(__dirname, '../../src/frontend/index.html'));
+  } catch (error) {
+    console.error('Main route auth error:', error);
+    res.clearCookie('session_id');
+    res.redirect('/login');
+  }
 });
 
 // Catch all other routes
