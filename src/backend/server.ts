@@ -1,7 +1,10 @@
+// Load environment variables FIRST
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express, { Express, Request, Response } from 'express';
 import path from 'path';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import whatsappRoutes from './routes/whatsapp';
 import telegramRoutes from './routes/telegram';
@@ -10,9 +13,6 @@ import whatsappService from './services/whatsappService';
 import telegramService from './services/telegramService';
 import databaseService from './services/databaseService';
 import { checkAuth, optionalAuth } from './middleware/auth';
-
-// Load environment variables
-dotenv.config();
 
 const app: Express = express();
 const PORT: number = parseInt(process.env.PORT || '3000', 10);
