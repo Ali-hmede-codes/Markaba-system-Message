@@ -264,6 +264,9 @@ button:disabled {
   border: 1px solid #ddd;
   border-radius: 4px;
   resize: vertical;
+  direction: auto;
+  text-align: start;
+  unicode-bidi: plaintext;
 }
 
 #send-status {
