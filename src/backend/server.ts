@@ -28,13 +28,22 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Health check endpoint
-app.get('/api/health', (req: Request, res: Response) => {
+app.get('/api/health', async (req: Request, res: Response) => {
+  let dbStatus = 'unknown';
+  try {
+    await databaseService.testConnection();
+    dbStatus = 'connected';
+  } catch (error) {
+    dbStatus = 'disconnected';
+    console.error('Database health check failed:', error);
+  }
   res.status(200).json({
     status: 'OK',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     memory: process.memoryUsage(),
-    version: process.version
+    version: process.version,
+    database: dbStatus
   });
 });
 
