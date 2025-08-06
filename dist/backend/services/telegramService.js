@@ -1,9 +1,13 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const events_1 = require("events");
+const node_telegram_bot_api_1 = __importDefault(require("node-telegram-bot-api"));
 class TelegramService extends events_1.EventEmitter {
     config;
-    baseUrl;
+    bot;
     isConnected = false;
     constructor() {
         super();
@@ -12,26 +16,21 @@ class TelegramService extends events_1.EventEmitter {
             channelId: process.env.TELEGRAM_CHANNEL_ID || '',
             userId: parseInt(process.env.TELEGRAM_USER_ID || '0')
         };
-        this.baseUrl = `https://api.telegram.org/bot${this.config.botToken}`;
+        if (!this.config.botToken) {
+            throw new Error('TELEGRAM_BOT_TOKEN is not configured in environment variables');
+        }
+        this.bot = new node_telegram_bot_api_1.default(this.config.botToken, { polling: false });
     }
     async initialize() {
         try {
-            if (!this.config.botToken) {
-                throw new Error('TELEGRAM_BOT_TOKEN is not configured in environment variables');
-            }
             if (!this.config.channelId) {
                 throw new Error('TELEGRAM_CHANNEL_ID is not configured in environment variables');
             }
-            const response = await this.makeRequest('/getMe');
-            if (response.ok) {
-                this.isConnected = true;
-                console.log('✓ Telegram bot connected:', response.result.username);
-                console.log('✓ Telegram channel ID:', this.config.channelId);
-                this.emit('connected', true);
-            }
-            else {
-                throw new Error(`Failed to connect to Telegram bot: ${response.description}`);
-            }
+            const botInfo = await this.bot.getMe();
+            this.isConnected = true;
+            console.log('✓ Telegram bot connected:', botInfo.username);
+            console.log('✓ Telegram channel ID:', this.config.channelId);
+            this.emit('connected', true);
         }
         catch (error) {
             console.error('Telegram connection error:', error);
@@ -40,32 +39,16 @@ class TelegramService extends events_1.EventEmitter {
             throw error;
         }
     }
-    async makeRequest(endpoint, options = {}) {
-        const url = `${this.baseUrl}${endpoint}`;
-        const response = await fetch(url, options);
-        const data = await response.json();
-        return data;
-    }
     async sendMessage(text) {
         try {
-            const response = await this.makeRequest('/sendMessage', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    chat_id: this.config.channelId,
-                    text: text,
-                    parse_mode: 'HTML'
-                })
+            if (!this.isConnected) {
+                throw new Error('Telegram bot is not connected. Please initialize first.');
+            }
+            const message = await this.bot.sendMessage(this.config.channelId, text, {
+                parse_mode: 'HTML'
             });
-            if (response.ok) {
-                console.log('✓ Message sent to Telegram channel');
-                return { success: true, messageId: response.result.message_id };
-            }
-            else {
-                throw new Error(response.description || 'Failed to send message');
-            }
+            console.log('✓ Message sent to Telegram channel');
+            return { success: true, messageId: message.message_id };
         }
         catch (error) {
             console.error('Error sending Telegram message:', error);
@@ -74,24 +57,15 @@ class TelegramService extends events_1.EventEmitter {
     }
     async sendPhoto(photoBuffer, caption, fileName) {
         try {
-            const formData = new FormData();
-            const blob = new Blob([photoBuffer]);
-            formData.append('photo', blob, fileName);
-            formData.append('chat_id', this.config.channelId);
-            if (caption)
-                formData.append('caption', caption);
-            formData.append('parse_mode', 'HTML');
-            const response = await this.makeRequest('/sendPhoto', {
-                method: 'POST',
-                body: formData
+            if (!this.isConnected) {
+                throw new Error('Telegram bot is not connected. Please initialize first.');
+            }
+            const message = await this.bot.sendPhoto(this.config.channelId, photoBuffer, {
+                caption: caption,
+                parse_mode: 'HTML'
             });
-            if (response.ok) {
-                console.log('✓ Photo sent to Telegram channel');
-                return { success: true, messageId: response.result.message_id };
-            }
-            else {
-                throw new Error(response.description || 'Failed to send photo');
-            }
+            console.log('✓ Photo sent to Telegram channel');
+            return { success: true, messageId: message.message_id };
         }
         catch (error) {
             console.error('Error sending Telegram photo:', error);
@@ -100,24 +74,15 @@ class TelegramService extends events_1.EventEmitter {
     }
     async sendVideo(videoBuffer, caption, fileName) {
         try {
-            const formData = new FormData();
-            const blob = new Blob([videoBuffer]);
-            formData.append('video', blob, fileName);
-            formData.append('chat_id', this.config.channelId);
-            if (caption)
-                formData.append('caption', caption);
-            formData.append('parse_mode', 'HTML');
-            const response = await this.makeRequest('/sendVideo', {
-                method: 'POST',
-                body: formData
+            if (!this.isConnected) {
+                throw new Error('Telegram bot is not connected. Please initialize first.');
+            }
+            const message = await this.bot.sendVideo(this.config.channelId, videoBuffer, {
+                caption: caption,
+                parse_mode: 'HTML'
             });
-            if (response.ok) {
-                console.log('✓ Video sent to Telegram channel');
-                return { success: true, messageId: response.result.message_id };
-            }
-            else {
-                throw new Error(response.description || 'Failed to send video');
-            }
+            console.log('✓ Video sent to Telegram channel');
+            return { success: true, messageId: message.message_id };
         }
         catch (error) {
             console.error('Error sending Telegram video:', error);
@@ -126,24 +91,17 @@ class TelegramService extends events_1.EventEmitter {
     }
     async sendDocument(documentBuffer, caption, fileName) {
         try {
-            const formData = new FormData();
-            const blob = new Blob([documentBuffer]);
-            formData.append('document', blob, fileName);
-            formData.append('chat_id', this.config.channelId);
-            if (caption)
-                formData.append('caption', caption);
-            formData.append('parse_mode', 'HTML');
-            const response = await this.makeRequest('/sendDocument', {
-                method: 'POST',
-                body: formData
+            if (!this.isConnected) {
+                throw new Error('Telegram bot is not connected. Please initialize first.');
+            }
+            const message = await this.bot.sendDocument(this.config.channelId, documentBuffer, {
+                caption: caption,
+                parse_mode: 'HTML'
+            }, {
+                filename: fileName
             });
-            if (response.ok) {
-                console.log('✓ Document sent to Telegram channel');
-                return { success: true, messageId: response.result.message_id };
-            }
-            else {
-                throw new Error(response.description || 'Failed to send document');
-            }
+            console.log('✓ Document sent to Telegram channel');
+            return { success: true, messageId: message.message_id };
         }
         catch (error) {
             console.error('Error sending Telegram document:', error);
@@ -152,6 +110,9 @@ class TelegramService extends events_1.EventEmitter {
     }
     async sendMediaMessage(mediaBuffer, mediaType, fileName, caption) {
         try {
+            if (!this.isConnected) {
+                throw new Error('Telegram bot is not connected. Please initialize first.');
+            }
             if (mediaType.startsWith('image/')) {
                 return await this.sendPhoto(mediaBuffer, caption, fileName);
             }
@@ -163,7 +124,7 @@ class TelegramService extends events_1.EventEmitter {
             }
         }
         catch (error) {
-            console.error('Error sending media to Telegram:', error);
+            console.error('Error sending media message:', error);
             throw error;
         }
     }
