@@ -112,7 +112,7 @@ router.get('/test-users', async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: 'Database error',
-      error: error.message
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });

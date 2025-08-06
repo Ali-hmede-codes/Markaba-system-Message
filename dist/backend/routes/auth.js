@@ -80,6 +80,25 @@ router.post('/logout', async (req, res) => {
         });
     }
 });
+router.get('/test-users', async (req, res) => {
+    try {
+        const users = await authService_1.default.getAllUsers();
+        console.log('All users from database:', users);
+        res.json({
+            success: true,
+            users: users,
+            count: users.length
+        });
+    }
+    catch (error) {
+        console.error('Test users error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Database error',
+            error: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+});
 router.get('/status', async (req, res) => {
     try {
         const sessionId = req.cookies.session_id;

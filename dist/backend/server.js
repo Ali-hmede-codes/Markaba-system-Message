@@ -25,13 +25,23 @@ app.use((0, cors_1.default)({
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use((0, cookie_parser_1.default)());
-app.get('/api/health', (req, res) => {
+app.get('/api/health', async (req, res) => {
+    let dbStatus = 'unknown';
+    try {
+        await databaseService_1.default.testConnection();
+        dbStatus = 'connected';
+    }
+    catch (error) {
+        dbStatus = 'disconnected';
+        console.error('Database health check failed:', error);
+    }
     res.status(200).json({
         status: 'OK',
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
         memory: process.memoryUsage(),
-        version: process.version
+        version: process.version,
+        database: dbStatus
     });
 });
 app.use('/api/auth', auth_1.default);
