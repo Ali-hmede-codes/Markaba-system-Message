@@ -481,7 +481,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (previewContent) previewContent.innerHTML = '';
         }
         
-        // Hide progress after 3 seconds
+        // Hide progress after 2 seconds
         setTimeout(() => {
           progressContainer.style.display = 'none';
         }, 3000);
