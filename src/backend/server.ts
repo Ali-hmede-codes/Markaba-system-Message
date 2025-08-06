@@ -67,21 +67,31 @@ app.use((req: Request, res: Response) => {
 
 // Initialize services
 async function initializeServices() {
+  // Initialize database connection (optional)
   try {
-    // Initialize database connection
     await databaseService.initialize();
     await databaseService.testConnection();
     console.log('Database connected successfully');
-    
-    // Initialize WhatsApp and Telegram services
-    await whatsappService.initialize();
-    await telegramService.initialize();
-    
-    console.log('All services initialized successfully');
-  } catch (error) {
-    console.error('Service initialization error:', error);
-    process.exit(1);
+  } catch (dbError) {
+    console.warn('Database connection failed (continuing without database):', dbError instanceof Error ? dbError.message : 'Unknown error');
   }
+  
+  // Initialize WhatsApp and Telegram services
+  try {
+    await whatsappService.initialize();
+    console.log('WhatsApp service initialized');
+  } catch (whatsappError) {
+    console.warn('WhatsApp initialization failed:', whatsappError instanceof Error ? whatsappError.message : 'Unknown error');
+  }
+  
+  try {
+    await telegramService.initialize();
+    console.log('Telegram service initialized successfully');
+  } catch (telegramError) {
+    console.error('Telegram initialization failed:', telegramError instanceof Error ? telegramError.message : 'Unknown error');
+  }
+  
+  console.log('Service initialization completed');
 }
 
 initializeServices();

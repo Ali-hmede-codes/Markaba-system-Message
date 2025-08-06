@@ -51,14 +51,25 @@ async function initializeServices() {
         await databaseService_1.default.initialize();
         await databaseService_1.default.testConnection();
         console.log('Database connected successfully');
+    }
+    catch (dbError) {
+        console.warn('Database connection failed (continuing without database):', dbError instanceof Error ? dbError.message : 'Unknown error');
+    }
+    try {
         await whatsappService_1.default.initialize();
+        console.log('WhatsApp service initialized');
+    }
+    catch (whatsappError) {
+        console.warn('WhatsApp initialization failed:', whatsappError instanceof Error ? whatsappError.message : 'Unknown error');
+    }
+    try {
         await telegramService_1.default.initialize();
-        console.log('All services initialized successfully');
+        console.log('Telegram service initialized successfully');
     }
-    catch (error) {
-        console.error('Service initialization error:', error);
-        process.exit(1);
+    catch (telegramError) {
+        console.error('Telegram initialization failed:', telegramError instanceof Error ? telegramError.message : 'Unknown error');
     }
+    console.log('Service initialization completed');
 }
 initializeServices();
 app.listen(PORT, () => {
