@@ -10,6 +10,13 @@ interface Group {
   participants: number;
 }
 
+interface Channel {
+  id: string;
+  name: string;
+  description?: string;
+  verified?: boolean;
+}
+
 class WhatsAppService extends EventEmitter {
   private socket: WASocket | null = null;
   private qrCode: string | null = null;
@@ -17,6 +24,7 @@ class WhatsAppService extends EventEmitter {
   private authState: 'DISCONNECTED' | 'CONNECTING' | 'QR_REQUIRED' | 'AUTHENTICATED' | 'READY' = 'DISCONNECTED';
   private favoritesPath: string = path.join(__dirname, '../../../favorites.json');
   private cachePath: string = path.join(__dirname, '../../../cachedGroups.json');
+  private channelsCachePath: string = path.join(__dirname, '../../../cachedChannels.json');
   private cacheMaxAge: number = 5 * 60 * 1000; // 5 minutes
   private reconnectAttempts: number = 0;
   private maxReconnectAttempts: number = 5;
@@ -283,6 +291,82 @@ class WhatsAppService extends EventEmitter {
     }
   }
 
+  async getChannels(forceRefresh: boolean = false): Promise<Channel[]> {
+    if (!this.socket) throw new Error('Socket not initialized');
+
+    // Check cache first
+    if (!forceRefresh) {
+      try {
+        if (await fs.pathExists(this.channelsCachePath)) {
+          const cacheData = await fs.readJson(this.channelsCachePath);
+          if (Date.now() - cacheData.timestamp < this.cacheMaxAge && Array.isArray(cacheData.channels)) {
+            console.log(`Returning ${cacheData.channels.length} cached channels (age: ${Math.round((Date.now() - cacheData.timestamp)/1000)}s)`);
+            return cacheData.channels;
+          }
+        }
+      } catch (err) {
+        console.warn('Channels cache load failed:', err);
+      }
+    }
+
+    if (!this.isConnected || this.authState !== 'READY') {
+      throw new Error(`WhatsApp not ready (state: ${this.authState})`);
+    }
+
+    try {
+      console.log('Fetching WhatsApp channels...');
+      
+      // Note: WhatsApp Channels support in Baileys is experimental
+      // This is a workaround to get newsletter/channel information
+      const channels: Channel[] = [];
+      
+      // Try to get newsletter metadata if available
+      try {
+        // This is experimental - Baileys may not fully support channels yet
+        // Use a different approach since store.chats.all() is not available
+        const chats = Object.values((this.socket as any).chats || {}) as any[];
+        
+        for (const chat of chats) {
+          if (chat && chat.id && chat.id.endsWith('@newsletter')) {
+            channels.push({
+              id: chat.id,
+              name: chat.name || chat.subject || chat.id.split('@')[0],
+              description: chat.description || undefined,
+              verified: chat.verified || false
+            });
+          }
+        }
+        
+        console.log(`Found ${channels.length} channels`);
+        
+        // Cache the results
+        const cacheData = {
+          channels,
+          timestamp: Date.now()
+        };
+        
+        try {
+          await fs.writeJson(this.channelsCachePath, cacheData);
+          console.log('Channels cached successfully');
+        } catch (cacheErr) {
+          console.warn('Failed to cache channels:', cacheErr);
+        }
+        
+        return channels;
+        
+      } catch (channelErr) {
+        console.warn('Failed to fetch channels - this feature is experimental:', channelErr);
+        
+        // Return empty array with warning
+        return [];
+      }
+      
+    } catch (error) {
+      console.error('Error fetching channels:', error);
+      throw new Error(`Failed to fetch channels: ${(error as Error).message}`);
+    }
+  }
+
   async sendMessages(groupIds: string[], message: string, batchSize: number = 3, mediaBuffer?: Buffer, mediaType?: string, fileName?: string) {
     if (!this.socket) {
       throw new Error('WhatsApp socket not initialized');
@@ -382,6 +466,107 @@ class WhatsAppService extends EventEmitter {
 
     const successCount = results.filter(r => r.success).length;
     console.log(`${mediaBuffer ? 'Media m' : 'M'}essage sending completed: ${successCount}/${results.length} successful`);
+    return results;
+  }
+
+  async sendChannelMessages(channelIds: string[], message: string, batchSize: number = 2, mediaBuffer?: Buffer, mediaType?: string, fileName?: string) {
+    if (!this.socket) {
+      throw new Error('WhatsApp socket not initialized');
+    }
+
+    if (!this.isConnected || this.authState !== 'READY') {
+      throw new Error(`WhatsApp not ready (state: ${this.authState})`);
+    }
+
+    if (!Array.isArray(channelIds) || channelIds.length === 0) {
+      throw new Error('No channel IDs provided');
+    }
+
+    if (!message || message.trim().length === 0) {
+      throw new Error('Message cannot be empty');
+    }
+
+    console.log(`⚠️  EXPERIMENTAL: Sending ${mediaBuffer ? 'media ' : ''}message to ${channelIds.length} channels in batches of ${batchSize}`);
+    console.log('⚠️  Note: WhatsApp Channels support in Baileys is experimental and may not work as expected');
+    
+    const results = [];
+    
+    for (let i = 0; i < channelIds.length; i += batchSize) {
+      const batch = channelIds.slice(i, i + batchSize);
+      console.log(`Processing channel batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(channelIds.length/batchSize)}`);
+      
+      const batchPromises = batch.map(async (channelId) => {
+        try {
+          // Validate channel ID format
+          if (!channelId.endsWith('@newsletter')) {
+            throw new Error('Invalid channel ID format - must end with @newsletter');
+          }
+          
+          let messageContent: any;
+          
+          if (mediaBuffer && mediaType) {
+            // Send media message with caption
+            if (mediaType.startsWith('image/')) {
+              messageContent = {
+                image: mediaBuffer,
+                caption: message,
+                fileName: fileName || 'image'
+              };
+            } else if (mediaType.startsWith('video/')) {
+              messageContent = {
+                video: mediaBuffer,
+                caption: message,
+                fileName: fileName || 'video'
+              };
+            } else if (mediaType.startsWith('audio/')) {
+              messageContent = {
+                audio: mediaBuffer,
+                fileName: fileName || 'audio'
+              };
+            } else {
+              // Document
+              messageContent = {
+                document: mediaBuffer,
+                fileName: fileName || 'document',
+                caption: message
+              };
+            }
+          } else {
+            // Send text message
+            messageContent = {
+              text: message
+            };
+          }
+          
+          // Attempt to send message to channel
+          // Note: This is experimental and may fail
+          await this.socket!.sendMessage(channelId, messageContent);
+          console.log(`✓ ${mediaBuffer ? 'Media m' : 'M'}essage sent to channel ${channelId}`);
+          return { channelId, success: true };
+        } catch (error) {
+          const errorMessage = (error as Error).message;
+          console.error(`✗ Failed to send to channel ${channelId}:`, errorMessage);
+          return { channelId, success: false, error: errorMessage };
+        }
+      });
+
+      const batchResults = await Promise.all(batchPromises);
+      results.push(...batchResults);
+      
+      // Wait longer between batches for channels to avoid rate limiting
+      if (i + batchSize < channelIds.length) {
+        console.log('Waiting 5 seconds before next channel batch...');
+        await new Promise(resolve => setTimeout(resolve, 5000));
+      }
+    }
+
+    const successCount = results.filter(r => r.success).length;
+    console.log(`${mediaBuffer ? 'Media m' : 'M'}essage sending to channels completed: ${successCount}/${results.length} successful`);
+    
+    if (successCount === 0) {
+      console.warn('⚠️  No messages were sent successfully. Channel messaging is experimental and may not be fully supported.');
+    }
+    
     return results;
   }
 

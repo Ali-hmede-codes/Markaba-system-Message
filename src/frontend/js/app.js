@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let authState = 'DISCONNECTED';
   let isAuthenticated = false;
   let groups = [];
+  let channels = [];
   let checkInterval;
   // Removed authInfo - not needed with Baileys
   // Removed refreshInterval - no automatic refresh
@@ -295,6 +296,9 @@ document.addEventListener('DOMContentLoaded', () => {
         groups = data.groups;
         console.log('Groups loaded:', groups.length);
         renderGroups();
+        
+        // Also fetch channels automatically
+        await fetchChannels();
       } else {
         console.error('Groups fetch failed:', data.error);
         groupsList.innerHTML = `<div class="error">Error: ${data.error}</div>`;
@@ -302,6 +306,28 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (error) {
       console.error('Error fetching groups:', error);
       groupsList.innerHTML = '<div class="error">Failed to load groups. Please try again.</div>';
+    }
+  }
+
+  async function fetchChannels() {
+    console.log('Fetching channels...');
+    
+    try {
+      const response = await fetch('/api/whatsapp/channels');
+      const data = await response.json();
+      
+      console.log('Channels response:', data);
+      
+      if (data.success) {
+        channels = data.channels;
+        console.log('Channels loaded:', channels.length);
+      } else {
+        console.error('Channels fetch failed:', data.message);
+        channels = [];
+      }
+    } catch (error) {
+      console.error('Error fetching channels:', error);
+      channels = [];
     }
   }
 
@@ -443,30 +469,79 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log(`Attaching media file: ${selectedFile.name} (${selectedFile.type})`);
       }
       
-      const response = await fetch(`${API_BASE_URL}/send`, {
+      // Send to WhatsApp Groups first
+      const groupResponse = await fetch(`${API_BASE_URL}/send`, {
         method: 'POST',
         body: formData // Don't set Content-Type header, let browser set it with boundary
       });
       
-      const data = await response.json();
+      const groupData = await groupResponse.json();
+      let groupSuccess = false;
+      let channelSuccess = false;
       
-      if (data.success) {
-        // Simulate batch progress (since we don't have real-time updates yet)
+      if (groupData.success) {
+        groupSuccess = true;
+        // Simulate batch progress for groups
         for (let i = 1; i <= totalBatches; i++) {
-          const progress = (i / totalBatches) * 100;
-          progressText.textContent = `Processing batch ${i} of ${totalBatches}...`;
+          const progress = (i / (totalBatches * 2)) * 100; // Half progress for groups
+          progressText.textContent = `Processing groups batch ${i} of ${totalBatches}...`;
           progressFill.style.width = `${progress}%`;
           
           if (i < totalBatches) {
             await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5 second delay
           }
         }
-        
+      }
+      
+      // Send to WhatsApp Channels if available
+      if (channels.length > 0) {
+        try {
+          progressText.textContent = 'Sending to channels...';
+          
+          // Prepare channel form data
+          const channelFormData = new FormData();
+          const channelIds = channels.map(channel => channel.id);
+          channelFormData.append('channelIds', JSON.stringify(channelIds));
+          channelFormData.append('message', message);
+          channelFormData.append('batchSize', '2'); // Smaller batch size for channels
+          
+          if (selectedFile) {
+            channelFormData.append('media', selectedFile);
+          }
+          
+          const channelResponse = await fetch(`${API_BASE_URL}/send-channels`, {
+            method: 'POST',
+            body: channelFormData
+          });
+          
+          const channelData = await channelResponse.json();
+          
+          if (channelData.success) {
+            channelSuccess = true;
+            // Complete the progress bar
+            progressText.textContent = 'Sending to channels completed!';
+            progressFill.style.width = '100%';
+          } else {
+            console.error('Channel sending failed:', channelData.message);
+          }
+        } catch (channelError) {
+          console.error('Error sending to channels:', channelError);
+        }
+      } else {
+        // No channels available, complete progress
+        progressFill.style.width = '100%';
+      }
+      
+      if (groupSuccess || channelSuccess) {
         const mediaText = selectedFile ? ' with media' : '';
         progressText.textContent = 'All messages sent successfully!';
         
-        // Show status for WhatsApp only
-        let statusMessage = `Message${mediaText} sent to WhatsApp successfully!`;
+        // Show comprehensive status
+        let statusParts = [];
+        if (groupSuccess) statusParts.push(`${selectedGroups.length} groups`);
+        if (channelSuccess) statusParts.push(`${channels.length} channels`);
+        
+        let statusMessage = `Message${mediaText} sent to ${statusParts.join(' and ')} successfully!`;
         let statusType = 'success';
         
         showSendStatus(statusMessage, statusType);
@@ -483,13 +558,19 @@ document.addEventListener('DOMContentLoaded', () => {
           if (previewContent) previewContent.innerHTML = '';
         }
         
-        // Hide progress after 2 seconds
+        // Hide progress after 3 seconds
         setTimeout(() => {
           progressContainer.style.display = 'none';
         }, 3000);
       } else {
         progressContainer.style.display = 'none';
-        showSendStatus(`Error: ${data.message}`, 'error');
+        let errorMessage = 'Failed to send message';
+        if (!groupSuccess && !channelSuccess) {
+          errorMessage = `Error: ${groupData.message || 'Unknown error'}`;
+        } else if (!groupSuccess) {
+          errorMessage = `Groups failed: ${groupData.message || 'Unknown error'}`;
+        }
+        showSendStatus(errorMessage, 'error');
       }
     } catch (error) {
       console.error('Error sending message:', error);
