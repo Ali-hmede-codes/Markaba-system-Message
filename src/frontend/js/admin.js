@@ -356,8 +356,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 credentials: 'include',
                 body: JSON.stringify({ 
-                    id: parseInt(userId), 
-                    password: password 
+                    userId: parseInt(userId), 
+                    newPassword: password 
                 })
             });
             

@@ -247,12 +247,9 @@ document.addEventListener('DOMContentLoaded', () => {
     statusMessage.textContent = statusText;
     statusMessage.className = statusClass;
     
-    // Show/hide UI elements based on connection state
+    // Show/hide UI elements based on connection state and user role
      if (isConnected && authState === 'READY') {
        connectBtn.style.display = 'none';
-       logoutBtn.style.display = 'inline-block';
-       forceReconnectBtn.style.display = 'inline-block';
-       clearAuthBtn.style.display = 'inline-block';
        groupsContainer.style.display = 'block';
        messageContainer.style.display = 'block';
        
@@ -260,14 +257,19 @@ document.addEventListener('DOMContentLoaded', () => {
        if (groups.length === 0) {
          groupsList.innerHTML = '<p>🔄 Loading WhatsApp groups...</p>';
        }
+       
+       // Check user role before showing WhatsApp control buttons
+       checkUserRole();
      } else {
        connectBtn.style.display = 'inline-block';
        connectBtn.disabled = (authState === 'CONNECTING' || authState === 'AUTHENTICATED');
+       groupsContainer.style.display = 'none';
+       messageContainer.style.display = 'none';
+       
+       // Hide WhatsApp control buttons when not connected
        logoutBtn.style.display = 'none';
        forceReconnectBtn.style.display = 'none';
        clearAuthBtn.style.display = (authState !== 'DISCONNECTED') ? 'inline-block' : 'none';
-       groupsContainer.style.display = 'none';
-       messageContainer.style.display = 'none';
        
        // Clear groups when disconnected
        if (authState === 'DISCONNECTED') {
@@ -700,11 +702,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (adminTabContainer) {
           adminTabContainer.style.display = 'block';
         }
+        // Show WhatsApp control buttons for admin users
+        if (logoutBtn) logoutBtn.style.display = 'inline-block';
+        if (forceReconnectBtn) forceReconnectBtn.style.display = 'inline-block';
+        if (clearAuthBtn) clearAuthBtn.style.display = 'inline-block';
       } else {
         // Hide admin tab for non-admin users
         if (adminTabContainer) {
           adminTabContainer.style.display = 'none';
         }
+        // Hide WhatsApp control buttons for regular users
+        if (logoutBtn) logoutBtn.style.display = 'none';
+        if (forceReconnectBtn) forceReconnectBtn.style.display = 'none';
+        if (clearAuthBtn) clearAuthBtn.style.display = 'none';
       }
     } catch (error) {
       console.error('Error checking user role:', error);
@@ -712,6 +722,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (adminTabContainer) {
         adminTabContainer.style.display = 'none';
       }
+      // Hide WhatsApp control buttons on error
+      if (logoutBtn) logoutBtn.style.display = 'none';
+      if (forceReconnectBtn) forceReconnectBtn.style.display = 'none';
+      if (clearAuthBtn) clearAuthBtn.style.display = 'none';
     }
   }
 
