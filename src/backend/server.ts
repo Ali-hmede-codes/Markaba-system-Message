@@ -27,9 +27,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Serve static files
-app.use(express.static(path.join(__dirname, '../../src/frontend')));
-
 // Health check endpoint
 app.get('/api/health', (req: Request, res: Response) => {
   res.status(200).json({
@@ -69,6 +66,9 @@ app.get('/', (req: Request, res: Response) => {
 app.get('/dashboard', checkAuth, (req: Request, res: Response) => {
   res.sendFile(path.join(__dirname, '../../src/frontend/index.html'));
 });
+
+// Serve static files after routes to prevent conflicts
+app.use(express.static(path.join(__dirname, '../../src/frontend')));
 
 // Catch all other routes
 // app.get('*', (req: Request, res: Response) => {

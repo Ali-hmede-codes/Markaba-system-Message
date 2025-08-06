@@ -25,7 +25,6 @@ app.use((0, cors_1.default)({
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use((0, cookie_parser_1.default)());
-app.use(express_1.default.static(path_1.default.join(__dirname, '../../src/frontend')));
 app.get('/api/health', (req, res) => {
     res.status(200).json({
         status: 'OK',
@@ -53,6 +52,7 @@ app.get('/', (req, res) => {
 app.get('/dashboard', auth_2.checkAuth, (req, res) => {
     res.sendFile(path_1.default.join(__dirname, '../../src/frontend/index.html'));
 });
+app.use(express_1.default.static(path_1.default.join(__dirname, '../../src/frontend')));
 app.use((req, res) => {
     res.status(404).send('Page not found');
 });
