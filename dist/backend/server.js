@@ -15,7 +15,6 @@ const auth_1 = __importDefault(require("./routes/auth"));
 const whatsappService_1 = __importDefault(require("./services/whatsappService"));
 const telegramService_1 = __importDefault(require("./services/telegramService"));
 const databaseService_1 = __importDefault(require("./services/databaseService"));
-const authService_1 = __importDefault(require("./services/authService"));
 const auth_2 = require("./middleware/auth");
 const app = (0, express_1.default)();
 const PORT = parseInt(process.env.PORT || '3000', 10);
@@ -48,24 +47,11 @@ app.get('/admin', auth_2.checkAuth, (req, res) => {
     }
     res.sendFile(path_1.default.join(__dirname, '../../src/frontend/admin.html'));
 });
-app.get('/', async (req, res) => {
-    try {
-        const sessionId = req.cookies.session_id;
-        if (!sessionId) {
-            return res.redirect('/login');
-        }
-        const user = await authService_1.default.validateSession(sessionId);
-        if (!user) {
-            res.clearCookie('session_id');
-            return res.redirect('/login');
-        }
-        res.sendFile(path_1.default.join(__dirname, '../../src/frontend/index.html'));
-    }
-    catch (error) {
-        console.error('Main route auth error:', error);
-        res.clearCookie('session_id');
-        res.redirect('/login');
-    }
+app.get('/', (req, res) => {
+    res.redirect('/login');
+});
+app.get('/dashboard', auth_2.checkAuth, (req, res) => {
+    res.sendFile(path_1.default.join(__dirname, '../../src/frontend/index.html'));
 });
 app.use((req, res) => {
     res.status(404).send('Page not found');

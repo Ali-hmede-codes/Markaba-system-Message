@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             
             if (!data.success || !data.authenticated || data.user.role !== 'admin') {
-                window.location.href = '/';
+                window.location.href = '/dashboard';
                 return;
             }
         } catch (error) {
@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function setupEventListeners() {
         // Navigation
         backToMainBtn.addEventListener('click', () => {
-            window.location.href = '/';
+            window.location.href = '/dashboard';
         });
         
         logoutBtn.addEventListener('click', handleLogout);

@@ -60,31 +60,14 @@ app.get('/admin', checkAuth, (req: Request, res: Response) => {
   res.sendFile(path.join(__dirname, '../../src/frontend/admin.html'));
 });
 
-// Serve the main HTML file - redirect to login if not authenticated
-app.get('/', async (req: Request, res: Response) => {
-  try {
-    const sessionId = req.cookies.session_id;
-    
-    if (!sessionId) {
-      return res.redirect('/login');
-    }
-    
-    // Validate the session
-    const user = await authService.validateSession(sessionId);
-    
-    if (!user) {
-      // Clear invalid session cookie and redirect to login
-      res.clearCookie('session_id');
-      return res.redirect('/login');
-    }
-    
-    // Valid session, serve the main page
-    res.sendFile(path.join(__dirname, '../../src/frontend/index.html'));
-  } catch (error) {
-    console.error('Main route auth error:', error);
-    res.clearCookie('session_id');
-    res.redirect('/login');
-  }
+// Main route - always redirect to login for authentication
+app.get('/', (req: Request, res: Response) => {
+  res.redirect('/login');
+});
+
+// Dashboard route - serves main app after authentication
+app.get('/dashboard', checkAuth, (req: Request, res: Response) => {
+  res.sendFile(path.join(__dirname, '../../src/frontend/index.html'));
 });
 
 // Catch all other routes
