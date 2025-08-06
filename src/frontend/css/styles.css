@@ -5,25 +5,56 @@
 }
 
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   line-height: 1.6;
   color: #333;
   background-color: #f4f4f4;
   padding: 20px;
+  direction: rtl;
 }
 
 .header-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid #e9ecef;
+  margin-bottom: 25px;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 15px;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+  color: white;
+}
+
+.header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.logo-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-icon {
+  font-size: 32px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 .header-section h1 {
   margin: 0;
-  color: #4a4a4a;
+  color: white;
+  font-size: 24px;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.header-subtitle {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  margin: 0;
+  font-weight: 400;
 }
 
 .header-section .logout-btn {

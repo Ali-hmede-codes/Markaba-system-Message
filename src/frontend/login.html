@@ -1,43 +1,47 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - WhatsApp Message Send System</title>
+    <title>تسجيل الدخول - مركبا - المنصة الاخبارية</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/login.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="login-container">
         <div class="login-card">
             <div class="login-header">
-                <h1>WhatsApp Message System</h1>
-                <p>Please sign in to continue</p>
+                <div class="logo-section">
+                    <div class="logo-icon">📰</div>
+                    <h1>مركبا - المنصة الاخبارية</h1>
+                </div>
+                <p>يرجى تسجيل الدخول للمتابعة</p>
             </div>
             
             <form id="loginForm" class="login-form">
                 <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" name="username" required autocomplete="username">
+                    <label for="username">اسم المستخدم</label>
+                    <input type="text" id="username" name="username" required autocomplete="username" placeholder="أدخل اسم المستخدم">
                 </div>
                 
                 <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required autocomplete="current-password">
+                    <label for="password">كلمة المرور</label>
+                    <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="أدخل كلمة المرور">
                 </div>
                 
                 <div class="form-group checkbox-group">
                     <label class="checkbox-label">
                         <input type="checkbox" id="rememberMe" name="rememberMe">
                         <span class="checkmark"></span>
-                        Remember me
+                        تذكرني
                     </label>
                 </div>
                 
                 <div class="form-group">
                     <button type="submit" id="loginBtn" class="login-btn">
-                        <span class="btn-text">Sign In</span>
-                        <span class="btn-loading" style="display: none;">Signing in...</span>
+                        <span class="btn-text">🔐 تسجيل الدخول</span>
+                        <span class="btn-loading" style="display: none;">جاري تسجيل الدخول...</span>
                     </button>
                 </div>
             </form>
@@ -45,7 +49,7 @@
             <div id="loginMessage" class="message" style="display: none;"></div>
             
             <div class="login-footer">
-                <p>&copy; 2024 WhatsApp Message Send System</p>
+                <p>&copy; 2024 مركبا - المنصة الاخبارية | جميع الحقوق محفوظة</p>
             </div>
         </div>
     </div>

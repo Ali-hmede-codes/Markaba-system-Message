@@ -1,38 +1,45 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WhatsApp Web System</title>
+  <title>مركبا - المنصة الاخبارية</title>
   <link rel="stylesheet" href="css/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="container">
     <div class="header-section">
-      <h1>WhatsApp Web System</h1>
-      <button id="logout-main-btn" class="logout-btn">Logout</button>
+      <div class="header-content">
+        <div class="logo-header">
+          <span class="header-icon">📰</span>
+          <h1>مركبا - المنصة الاخبارية</h1>
+        </div>
+        <p class="header-subtitle">نظام إرسال الرسائل المتقدم</p>
+      </div>
+      <button id="logout-main-btn" class="logout-btn">تسجيل الخروج</button>
     </div>
     
     <!-- Admin Panel Tab (only visible for admin users) -->
     <div id="admin-tab-container" style="display: none;">
       <div class="admin-tab">
-        <button id="admin-panel-btn" class="admin-btn">🔧 Admin Panel</button>
+        <button id="admin-panel-btn" class="admin-btn">🔧 لوحة الإدارة</button>
       </div>
     </div>
     
     <div id="status-container">
-      <h2>WhatsApp Status</h2>
-      <div id="status-message">Not connected</div>
+      <h2>حالة الواتساب</h2>
+      <div id="status-message">غير متصل</div>
     </div>
     
 
     
     <div id="connection-container">
       <div class="connection-buttons">
-        <button id="connect-btn">Connect to WhatsApp</button>
-        <button id="logout-btn" style="display: none;">Logout</button>
-        <button id="force-reconnect-btn" style="display: none;">Force Reconnect</button>
-        <button id="clear-auth-btn" style="display: none;">Clear Auth Data</button>
+        <button id="connect-btn">🔗 الاتصال بالواتساب</button>
+        <button id="logout-btn" style="display: none;">تسجيل الخروج</button>
+        <button id="force-reconnect-btn" style="display: none;">إعادة الاتصال القسري</button>
+        <button id="clear-auth-btn" style="display: none;">مسح بيانات المصادقة</button>
       </div>
       <div id="qrcode-container" style="display: none;">
         <div id="qrcode"></div>
@@ -40,13 +47,13 @@
     </div>
     
     <div id="groups-container" style="display: none;">
-      <h2>WhatsApp Groups</h2>
+      <h2>مجموعات الواتساب</h2>
       <div class="group-controls">
-        <button id="refresh-groups-btn">🔄 Load Groups</button>
-        <button id="select-all-btn">Select All</button>
-        <button id="deselect-all-btn">Deselect All</button>
-        <button id="save-favorites-btn">Save Favorites</button>
-        <button id="load-favorites-btn">Load Favorites</button>
+        <button id="refresh-groups-btn">🔄 تحميل المجموعات</button>
+        <button id="select-all-btn">تحديد الكل</button>
+        <button id="deselect-all-btn">إلغاء تحديد الكل</button>
+        <button id="save-favorites-btn">حفظ المفضلة</button>
+        <button id="load-favorites-btn">تحميل المفضلة</button>
       </div>
       <div id="groups-list"></div>
     </div>
@@ -54,30 +61,30 @@
 
     
     <div id="message-container" style="display: none;">
-      <h2>Send Message</h2>
+      <h2>إرسال الرسالة</h2>
       <form id="message-form" enctype="multipart/form-data">
         <div class="message-input-section">
-          <textarea id="message-input" placeholder="Type your message here..."></textarea>
+          <textarea id="message-input" placeholder="اكتب رسالتك هنا..."></textarea>
         </div>
         
         <div class="media-upload-section">
-          <label for="media-input">📎 Attach Media (Optional):</label>
+          <label for="media-input">📎 إرفاق وسائط (اختياري):</label>
           <input type="file" id="media-input" name="media" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt">
           <div id="media-preview" style="display: none;">
             <div class="preview-header">
               <span id="preview-filename"></span>
-              <button type="button" id="remove-media">✕ Remove</button>
+              <button type="button" id="remove-media">✕ إزالة</button>
             </div>
             <div id="preview-content"></div>
           </div>
         </div>
         
         <div class="batch-settings">
-          <label for="batch-size">Batch Size:</label>
+          <label for="batch-size">حجم الدفعة:</label>
           <input type="number" id="batch-size" value="5" min="1">
         </div>
         
-        <button type="submit" id="send-btn">Send to Selected Groups</button>
+        <button type="submit" id="send-btn">📤 إرسال للمجموعات المحددة</button>
       </form>
       
       <div id="send-status"></div>
