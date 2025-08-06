@@ -39,7 +39,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express = __importStar(require("express"));
 const multer_1 = __importDefault(require("multer"));
 const whatsappService_1 = __importDefault(require("../services/whatsappService"));
-const telegramService_1 = __importDefault(require("../services/telegramService"));
 const router = express.Router();
 const upload = (0, multer_1.default)({
     storage: multer_1.default.memoryStorage(),
@@ -146,31 +145,12 @@ router.post('/send', upload.single('media'), async (req, res) => {
         else {
             whatsappResults = await whatsappService_1.default.sendMessages(groupIds, message, batchSize);
         }
-        try {
-            if (telegramService_1.default.getConnectionStatus()) {
-                if (mediaFile) {
-                    telegramResult = await telegramService_1.default.sendMediaMessage(mediaFile.buffer, mediaFile.mimetype, mediaFile.originalname, message);
-                }
-                else {
-                    telegramResult = await telegramService_1.default.sendMessage(message);
-                }
-                console.log('✓ Message also sent to Telegram channel');
-            }
-            else {
-                console.log('⚠ Telegram not connected, skipping Telegram send');
-            }
-        }
-        catch (telegramError) {
-            console.error('Telegram send error (continuing with WhatsApp):', telegramError);
-            telegramResult = { error: telegramError instanceof Error ? telegramError.message : 'Unknown error' };
-        }
+        telegramResult = { success: true, message: 'Telegram sending disabled' };
         res.json({
             success: true,
             whatsappResults,
             telegramResult,
-            message: telegramResult?.error ?
-                'Message sent to WhatsApp successfully, but failed to send to Telegram' :
-                'Message sent to both WhatsApp and Telegram successfully'
+            message: 'Message sent to WhatsApp groups only (Telegram disabled)'
         });
     }
     catch (error) {

@@ -141,35 +141,14 @@ router.post('/send', upload.single('media'), async (req: Request, res: Response)
       whatsappResults = await whatsappService.sendMessages(groupIds, message, batchSize);
     }
     
-    // Send to Telegram
-    try {
-      if (telegramService.getConnectionStatus()) {
-        if (mediaFile) {
-          telegramResult = await telegramService.sendMediaMessage(
-            mediaFile.buffer,
-            mediaFile.mimetype,
-            mediaFile.originalname,
-            message
-          );
-        } else {
-          telegramResult = await telegramService.sendMessage(message);
-        }
-        console.log('✓ Message also sent to Telegram channel');
-      } else {
-        console.log('⚠ Telegram not connected, skipping Telegram send');
-      }
-    } catch (telegramError) {
-      console.error('Telegram send error (continuing with WhatsApp):', telegramError);
-      telegramResult = { error: telegramError instanceof Error ? telegramError.message : 'Unknown error' };
-    }
+    // Temporarily disabled Telegram sending to prevent errors
+    telegramResult = { success: true, message: 'Telegram sending disabled' };
     
     res.json({ 
       success: true, 
       whatsappResults,
       telegramResult,
-      message: telegramResult?.error ? 
-        'Message sent to WhatsApp successfully, but failed to send to Telegram' : 
-        'Message sent to both WhatsApp and Telegram successfully'
+      message: 'Message sent to WhatsApp groups only (Telegram disabled)'
     });
   } catch (error) {
     console.error('Error sending message:', error);
