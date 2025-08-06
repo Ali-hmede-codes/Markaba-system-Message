@@ -97,6 +97,26 @@ router.post('/logout', async (req: Request, res: Response) => {
   }
 });
 
+// Test database users endpoint
+router.get('/test-users', async (req: Request, res: Response) => {
+  try {
+    const users = await authService.getAllUsers();
+    console.log('All users from database:', users);
+    res.json({
+      success: true,
+      users: users,
+      count: users.length
+    });
+  } catch (error) {
+    console.error('Test users error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Database error',
+      error: error.message
+    });
+  }
+});
+
 // Check authentication status
 router.get('/status', async (req: Request, res: Response) => {
   try {
