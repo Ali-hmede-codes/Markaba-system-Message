@@ -62,6 +62,7 @@ async function handleLogin(e) {
     
     const username = usernameInput.value.trim();
     const password = passwordInput.value;
+    const rememberMe = document.getElementById('rememberMe').checked;
     
     // Validate inputs
     if (!username || !password) {
@@ -82,7 +83,8 @@ async function handleLogin(e) {
             credentials: 'include',
             body: JSON.stringify({
                 username: username,
-                password: password
+                password: password,
+                rememberMe: rememberMe
             })
         });
         

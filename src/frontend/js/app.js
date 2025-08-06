@@ -17,10 +17,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const deselectAllBtn = document.getElementById('deselect-all-btn');
   const saveFavoritesBtn = document.getElementById('save-favorites-btn');
   const loadFavoritesBtn = document.getElementById('load-favorites-btn');
+  
+  // Admin elements
+  const adminTabContainer = document.getElementById('admin-tab-container');
+  const adminPanelBtn = document.getElementById('admin-panel-btn');
+  const logoutMainBtn = document.getElementById('logout-main-btn');
 
   // API Base URLs
   const API_BASE_URL = '/api/whatsapp';
-  const TELEGRAM_API_BASE_URL = '/api/telegram';
+  const AUTH_API_BASE_URL = '/api/auth';
 
   // State
   let isConnected = false;
@@ -28,7 +33,6 @@ document.addEventListener('DOMContentLoaded', () => {
   let isAuthenticated = false;
   let groups = [];
   let checkInterval;
-  let telegramConnected = false;
   // Removed authInfo - not needed with Baileys
   // Removed refreshInterval - no automatic refresh
 
@@ -48,6 +52,17 @@ document.addEventListener('DOMContentLoaded', () => {
   saveFavoritesBtn.addEventListener('click', saveFavoriteGroups);
   loadFavoritesBtn.addEventListener('click', loadFavoriteGroups);
   
+  // Admin event listeners
+  if (adminPanelBtn) {
+    adminPanelBtn.addEventListener('click', () => {
+      window.location.href = '/admin.html';
+    });
+  }
+  
+  if (logoutMainBtn) {
+    logoutMainBtn.addEventListener('click', handleMainLogout);
+  }
+  
   // Add refresh groups button listener
   document.getElementById('refresh-groups-btn').addEventListener('click', () => {
     console.log('Manual refresh groups clicked');
@@ -66,8 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sendMessage();
   });
 
-  // Add Telegram test button listener
-  document.getElementById('telegram-test-btn').addEventListener('click', sendTelegramTestMessage);
+
 
   // Make fetchGroups globally accessible for retry buttons
   window.fetchGroups = fetchGroups;
@@ -75,6 +89,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Functions
   async function init() {
     try {
+      // Check user authentication and role
+      await checkUserRole();
+      
       // Check WhatsApp status
       const response = await fetch(`${API_BASE_URL}/status`);
       const data = await response.json();
@@ -85,9 +102,6 @@ document.addEventListener('DOMContentLoaded', () => {
       isAuthenticated = data.connected;
       
       console.log('Initial WhatsApp status:', { isConnected, authState, isAuthenticated });
-      
-      // Check Telegram status
-      await checkTelegramStatus();
       
       updateUI();
       
@@ -103,30 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  async function checkTelegramStatus() {
-    try {
-      const response = await fetch(`${TELEGRAM_API_BASE_URL}/status`);
-      const data = await response.json();
-      
-      telegramConnected = data.connected;
-      console.log('Telegram status:', { connected: telegramConnected });
-      
-      // Update Telegram status in UI if elements exist
-      const telegramStatus = document.getElementById('telegram-status');
-      if (telegramStatus) {
-        telegramStatus.textContent = telegramConnected ? 'Connected' : 'Disconnected';
-        telegramStatus.className = telegramConnected ? 'connected' : 'disconnected';
-      }
-    } catch (error) {
-      console.error('Error checking Telegram status:', error);
-      telegramConnected = false;
-      const telegramStatus = document.getElementById('telegram-status');
-      if (telegramStatus) {
-        telegramStatus.textContent = 'Error';
-        telegramStatus.className = 'disconnected';
-      }
-    }
-  }
+
 
   async function initializeWhatsApp() {
     try {
@@ -472,21 +463,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const mediaText = selectedFile ? ' with media' : '';
         progressText.textContent = 'All messages sent successfully!';
         
-        // Show detailed status based on WhatsApp and Telegram results
+        // Show status for WhatsApp only
         let statusMessage = `Message${mediaText} sent to WhatsApp successfully!`;
         let statusType = 'success';
-        
-        if (data.telegramResult) {
-          if (data.telegramResult.error) {
-            statusMessage += ` (Telegram failed: ${data.telegramResult.error})`;
-            statusType = 'warning';
-          } else {
-            statusMessage = `Message${mediaText} sent to both WhatsApp and Telegram successfully!`;
-          }
-        } else if (telegramConnected) {
-          statusMessage += ' (Telegram not sent - check connection)';
-          statusType = 'warning';
-        }
         
         showSendStatus(statusMessage, statusType);
         messageInput.value = '';
@@ -519,51 +498,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  async function sendTelegramTestMessage() {
-    try {
-      const testMessage = document.getElementById('telegram-test-message').value.trim();
-      
-      if (testMessage === '') {
-        alert('Please enter a test message');
-        return;
-      }
-      
-      if (!telegramConnected) {
-        alert('Telegram is not connected. Please check the connection.');
-        return;
-      }
-      
-      const testBtn = document.getElementById('telegram-test-btn');
-      testBtn.disabled = true;
-      testBtn.textContent = 'Sending...';
-      
-      const response = await fetch(`${TELEGRAM_API_BASE_URL}/send`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          message: testMessage
-        })
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        alert('Test message sent to Telegram successfully!');
-        document.getElementById('telegram-test-message').value = '';
-      } else {
-        alert(`Failed to send test message: ${data.message || 'Unknown error'}`);
-      }
-    } catch (error) {
-      console.error('Error sending Telegram test message:', error);
-      alert(`Error: ${error.message}`);
-    } finally {
-      const testBtn = document.getElementById('telegram-test-btn');
-      testBtn.disabled = false;
-      testBtn.textContent = 'Send Test Message to Telegram';
-    }
-  }
+
 
   function showSendStatus(message, type) {
     sendStatus.textContent = message;
@@ -751,6 +686,50 @@ document.addEventListener('DOMContentLoaded', () => {
       showSendStatus(`Error: ${error.message}`, 'error');
     } finally {
       loadFavoritesBtn.disabled = false;
+    }
+  }
+
+  // Check user role and show admin tab if admin
+  async function checkUserRole() {
+    try {
+      const response = await fetch(`${AUTH_API_BASE_URL}/status`);
+      const data = await response.json();
+      
+      if (data.success && data.user && data.user.role === 'admin') {
+        // Show admin tab for admin users
+        if (adminTabContainer) {
+          adminTabContainer.style.display = 'block';
+        }
+      } else {
+        // Hide admin tab for non-admin users
+        if (adminTabContainer) {
+          adminTabContainer.style.display = 'none';
+        }
+      }
+    } catch (error) {
+      console.error('Error checking user role:', error);
+      // Hide admin tab on error
+      if (adminTabContainer) {
+        adminTabContainer.style.display = 'none';
+      }
+    }
+  }
+
+  // Handle main logout
+  async function handleMainLogout() {
+    try {
+      const response = await fetch(`${AUTH_API_BASE_URL}/logout`, {
+        method: 'POST'
+      });
+      
+      if (response.ok) {
+        // Redirect to login page
+        window.location.href = '/login.html';
+      } else {
+        console.error('Logout failed');
+      }
+    } catch (error) {
+      console.error('Error during logout:', error);
     }
   }
 });

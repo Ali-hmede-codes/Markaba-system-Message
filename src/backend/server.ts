@@ -50,8 +50,17 @@ app.get('/login', (req: Request, res: Response) => {
   res.sendFile(path.join(__dirname, '../../src/frontend/login.html'));
 });
 
-// Serve the main HTML file
-app.get('/', (req: Request, res: Response) => {
+// Serve admin panel (admin only)
+app.get('/admin', checkAuth, (req: Request, res: Response) => {
+  // Check if user is admin
+  if ((req as any).user.role !== 'admin') {
+    return res.redirect('/login');
+  }
+  res.sendFile(path.join(__dirname, '../../src/frontend/admin.html'));
+});
+
+// Serve the main HTML file - require authentication
+app.get('/', checkAuth, (req: Request, res: Response) => {
   res.sendFile(path.join(__dirname, '../../src/frontend/index.html'));
 });
 

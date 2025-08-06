@@ -15,6 +15,7 @@ const auth_1 = __importDefault(require("./routes/auth"));
 const whatsappService_1 = __importDefault(require("./services/whatsappService"));
 const telegramService_1 = __importDefault(require("./services/telegramService"));
 const databaseService_1 = __importDefault(require("./services/databaseService"));
+const auth_2 = require("./middleware/auth");
 const app = (0, express_1.default)();
 const PORT = parseInt(process.env.PORT || '3000', 10);
 app.use((0, cors_1.default)({
@@ -40,7 +41,13 @@ app.use('/api/telegram', telegram_1.default);
 app.get('/login', (req, res) => {
     res.sendFile(path_1.default.join(__dirname, '../../src/frontend/login.html'));
 });
-app.get('/', (req, res) => {
+app.get('/admin', auth_2.checkAuth, (req, res) => {
+    if (req.user.role !== 'admin') {
+        return res.redirect('/login');
+    }
+    res.sendFile(path_1.default.join(__dirname, '../../src/frontend/admin.html'));
+});
+app.get('/', auth_2.checkAuth, (req, res) => {
     res.sendFile(path_1.default.join(__dirname, '../../src/frontend/index.html'));
 });
 app.use((req, res) => {

@@ -8,7 +8,7 @@ const router = express.Router();
 // Login endpoint
 router.post('/login', async (req: Request, res: Response) => {
   try {
-    const { username, password } = req.body;
+    const { username, password, rememberMe } = req.body;
 
     if (!username || !password) {
       return res.status(400).json({
@@ -26,18 +26,20 @@ router.post('/login', async (req: Request, res: Response) => {
       });
     }
 
-    // Create session
+    // Create session with extended duration if remember me is checked
+    const sessionDuration = rememberMe ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000; // 30 days or 24 hours
     const sessionId = await authService.createSession(
       user.id,
       req.ip,
-      req.get('User-Agent')
+      req.get('User-Agent'),
+      rememberMe
     );
 
     // Set session cookie
     res.cookie('session_id', sessionId, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      maxAge: sessionDuration,
       sameSite: 'strict'
     });
 
@@ -272,6 +274,126 @@ router.post('/users/deactivate', authenticateUser, async (req: Request, res: Res
     });
   } catch (error) {
     console.error('Deactivate user error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// Activate user (admin only)
+router.post('/users/activate', authenticateUser, async (req: Request, res: Response) => {
+  try {
+    // Check if user is admin
+    if ((req as any).user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admin privileges required.'
+      });
+    }
+
+    const userId = parseInt(req.body.id);
+    
+    if (isNaN(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid user ID'
+      });
+    }
+
+    await authService.activateUser(userId);
+    
+    res.json({
+      success: true,
+      message: 'User activated successfully'
+    });
+  } catch (error) {
+    console.error('Activate user error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// Edit user (admin only)
+router.put('/users/:id', authenticateUser, async (req: Request, res: Response) => {
+  try {
+    // Check if user is admin
+    if ((req as any).user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admin privileges required.'
+      });
+    }
+
+    const userId = parseInt(req.params.id);
+    const { username, email, full_name, role } = req.body;
+    
+    if (isNaN(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid user ID'
+      });
+    }
+
+    if (!username || !email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Username and email are required'
+      });
+    }
+
+    await authService.updateUser(userId, { username, email, full_name, role });
+    
+    res.json({
+      success: true,
+      message: 'User updated successfully'
+    });
+  } catch (error) {
+    console.error('Update user error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// Change user password (admin only)
+router.post('/users/change-password', authenticateUser, async (req: Request, res: Response) => {
+  try {
+    // Check if user is admin
+    if ((req as any).user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admin privileges required.'
+      });
+    }
+
+    const { userId, newPassword } = req.body;
+    
+    if (!userId || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID and new password are required'
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 6 characters long'
+      });
+    }
+
+    await authService.changeUserPassword(parseInt(userId), newPassword);
+    
+    res.json({
+      success: true,
+      message: 'Password changed successfully'
+    });
+  } catch (error) {
+    console.error('Change password error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'

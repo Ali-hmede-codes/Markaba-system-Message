@@ -13,7 +13,7 @@ class TelegramService extends events_1.EventEmitter {
         super();
         this.config = {
             botToken: process.env.TELEGRAM_BOT_TOKEN || '',
-            channelId: process.env.TELEGRAM_CHANNEL_ID || '',
+            channelId: parseInt(process.env.TELEGRAM_CHANNEL_ID || '0'),
             userId: parseInt(process.env.TELEGRAM_USER_ID || '0')
         };
         if (!this.config.botToken) {
@@ -23,8 +23,8 @@ class TelegramService extends events_1.EventEmitter {
     }
     async initialize() {
         try {
-            if (!this.config.channelId) {
-                throw new Error('TELEGRAM_CHANNEL_ID is not configured in environment variables');
+            if (!this.config.channelId || this.config.channelId === 0) {
+                throw new Error('TELEGRAM_CHANNEL_ID is not configured or invalid in environment variables');
             }
             const botInfo = await this.bot.getMe();
             this.isConnected = true;

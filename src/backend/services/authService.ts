@@ -147,10 +147,11 @@ class AuthService {
     }
   }
 
-  async createSession(userId: number, ipAddress?: string, userAgent?: string): Promise<string> {
+  async createSession(userId: number, ipAddress?: string, userAgent?: string, rememberMe?: boolean): Promise<string> {
     try {
       const sessionId = uuidv4();
-      const expiresAt = new Date(Date.now() + this.sessionDuration);
+      const sessionDuration = rememberMe ? 30 * 24 * 60 * 60 * 1000 : this.sessionDuration; // 30 days or 24 hours
+      const expiresAt = new Date(Date.now() + sessionDuration);
 
       const sql = `
         INSERT INTO user_sessions (session_id, user_id, ip_address, user_agent, expires_at, is_active)
@@ -246,6 +247,44 @@ class AuthService {
     } catch (error) {
       console.error('Error deactivating user:', error);
       throw error;
+    }
+  }
+
+  async activateUser(userId: number): Promise<void> {
+    try {
+      await databaseService.query(
+        'UPDATE users SET is_active = 1 WHERE id = ?',
+        [userId]
+      );
+    } catch (error) {
+      console.error('Error activating user:', error);
+      throw new Error('Failed to activate user');
+    }
+  }
+
+  async updateUser(userId: number, userData: { username?: string; email?: string; full_name?: string; role?: string }): Promise<void> {
+    try {
+      const { username, email, full_name, role } = userData;
+      await databaseService.query(
+        'UPDATE users SET username = ?, email = ?, full_name = ?, role = ? WHERE id = ?',
+        [username, email, full_name, role, userId]
+      );
+    } catch (error) {
+      console.error('Error updating user:', error);
+      throw new Error('Failed to update user');
+    }
+  }
+
+  async changeUserPassword(userId: number, newPassword: string): Promise<void> {
+    try {
+      const hashedPassword = await this.hashPassword(newPassword);
+      await databaseService.query(
+        'UPDATE users SET password_hash = ? WHERE id = ?',
+        [hashedPassword, userId]
+      );
+    } catch (error) {
+      console.error('Error changing user password:', error);
+      throw new Error('Failed to change user password');
     }
   }
 }

@@ -99,10 +99,11 @@ class AuthService {
             throw error;
         }
     }
-    async createSession(userId, ipAddress, userAgent) {
+    async createSession(userId, ipAddress, userAgent, rememberMe) {
         try {
             const sessionId = (0, uuid_1.v4)();
-            const expiresAt = new Date(Date.now() + this.sessionDuration);
+            const sessionDuration = rememberMe ? 30 * 24 * 60 * 60 * 1000 : this.sessionDuration;
+            const expiresAt = new Date(Date.now() + sessionDuration);
             const sql = `
         INSERT INTO user_sessions (session_id, user_id, ip_address, user_agent, expires_at, is_active)
         VALUES (?, ?, ?, ?, ?, 1)
@@ -193,6 +194,35 @@ class AuthService {
         catch (error) {
             console.error('Error deactivating user:', error);
             throw error;
+        }
+    }
+    async activateUser(userId) {
+        try {
+            await databaseService_1.default.query('UPDATE users SET is_active = 1 WHERE id = ?', [userId]);
+        }
+        catch (error) {
+            console.error('Error activating user:', error);
+            throw new Error('Failed to activate user');
+        }
+    }
+    async updateUser(userId, userData) {
+        try {
+            const { username, email, full_name, role } = userData;
+            await databaseService_1.default.query('UPDATE users SET username = ?, email = ?, full_name = ?, role = ? WHERE id = ?', [username, email, full_name, role, userId]);
+        }
+        catch (error) {
+            console.error('Error updating user:', error);
+            throw new Error('Failed to update user');
+        }
+    }
+    async changeUserPassword(userId, newPassword) {
+        try {
+            const hashedPassword = await this.hashPassword(newPassword);
+            await databaseService_1.default.query('UPDATE users SET password_hash = ? WHERE id = ?', [hashedPassword, userId]);
+        }
+        catch (error) {
+            console.error('Error changing user password:', error);
+            throw new Error('Failed to change user password');
         }
     }
 }
