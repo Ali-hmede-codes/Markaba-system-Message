@@ -39,6 +39,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express = __importStar(require("express"));
 const multer_1 = __importDefault(require("multer"));
 const whatsappService_1 = __importDefault(require("../services/whatsappService"));
+const telegramService_1 = __importDefault(require("../services/telegramService"));
 const router = express.Router();
 const upload = (0, multer_1.default)({
     storage: multer_1.default.memoryStorage(),
@@ -136,15 +137,41 @@ router.post('/send', upload.single('media'), async (req, res) => {
         if (!message || message.trim() === '') {
             return res.status(400).json({ success: false, message: 'Message cannot be empty' });
         }
-        let results;
+        let whatsappResults;
+        let telegramResult = null;
         if (mediaFile) {
             console.log(`Sending media message: ${mediaFile.originalname} (${mediaFile.mimetype})`);
-            results = await whatsappService_1.default.sendMessages(groupIds, message, batchSize, mediaFile.buffer, mediaFile.mimetype, mediaFile.originalname);
+            whatsappResults = await whatsappService_1.default.sendMessages(groupIds, message, batchSize, mediaFile.buffer, mediaFile.mimetype, mediaFile.originalname);
         }
         else {
-            results = await whatsappService_1.default.sendMessages(groupIds, message, batchSize);
+            whatsappResults = await whatsappService_1.default.sendMessages(groupIds, message, batchSize);
         }
-        res.json({ success: true, results });
+        try {
+            if (telegramService_1.default.getConnectionStatus()) {
+                if (mediaFile) {
+                    telegramResult = await telegramService_1.default.sendMediaMessage(mediaFile.buffer, mediaFile.mimetype, mediaFile.originalname, message);
+                }
+                else {
+                    telegramResult = await telegramService_1.default.sendMessage(message);
+                }
+                console.log('✓ Message also sent to Telegram channel');
+            }
+            else {
+                console.log('⚠ Telegram not connected, skipping Telegram send');
+            }
+        }
+        catch (telegramError) {
+            console.error('Telegram send error (continuing with WhatsApp):', telegramError);
+            telegramResult = { error: telegramError instanceof Error ? telegramError.message : 'Unknown error' };
+        }
+        res.json({
+            success: true,
+            whatsappResults,
+            telegramResult,
+            message: telegramResult?.error ?
+                'Message sent to WhatsApp successfully, but failed to send to Telegram' :
+                'Message sent to both WhatsApp and Telegram successfully'
+        });
     }
     catch (error) {
         console.error('Error sending message:', error);
@@ -178,7 +205,7 @@ router.post('/logout', async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 });
-router.post('/auth/clear', async (req, res) => {
+router.post('/clear-session', async (req, res) => {
     try {
         await whatsappService_1.default.clearSession();
         res.json({ success: true, message: 'Session cleared successfully' });

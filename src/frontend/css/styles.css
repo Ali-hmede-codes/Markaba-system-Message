@@ -201,6 +201,11 @@ button:disabled {
   color: #721c24;
 }
 
+.warning {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
 .connected {
   color: #155724;
   background-color: #d4edda;

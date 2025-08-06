@@ -317,10 +317,17 @@ class WhatsAppService extends events_1.EventEmitter {
                             };
                         }
                         else if (mediaType.startsWith('video/')) {
+                            let defaultFileName = 'video.mp4';
+                            if (mediaType.includes('quicktime') || mediaType.includes('mov')) {
+                                defaultFileName = 'video.mov';
+                            }
+                            else if (mediaType.includes('avi')) {
+                                defaultFileName = 'video.avi';
+                            }
                             messageContent = {
                                 video: mediaBuffer,
                                 caption: message.trim(),
-                                fileName: fileName || 'video.mp4'
+                                fileName: fileName || defaultFileName
                             };
                         }
                         else if (mediaType.startsWith('audio/')) {

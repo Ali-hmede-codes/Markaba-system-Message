@@ -325,10 +325,18 @@ class WhatsAppService extends EventEmitter {
                 fileName: fileName || 'image.jpg'
               };
             } else if (mediaType.startsWith('video/')) {
+              // Use appropriate default extension based on media type
+              let defaultFileName = 'video.mp4';
+              if (mediaType.includes('quicktime') || mediaType.includes('mov')) {
+                defaultFileName = 'video.mov';
+              } else if (mediaType.includes('avi')) {
+                defaultFileName = 'video.avi';
+              }
+              
               messageContent = {
                 video: mediaBuffer,
                 caption: message.trim(),
-                fileName: fileName || 'video.mp4'
+                fileName: fileName || defaultFileName
               };
             } else if (mediaType.startsWith('audio/')) {
               messageContent = {

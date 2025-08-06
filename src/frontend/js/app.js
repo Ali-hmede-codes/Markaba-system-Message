@@ -18,8 +18,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const saveFavoritesBtn = document.getElementById('save-favorites-btn');
   const loadFavoritesBtn = document.getElementById('load-favorites-btn');
 
-  // API Base URL
+  // API Base URLs
   const API_BASE_URL = '/api/whatsapp';
+  const TELEGRAM_API_BASE_URL = '/api/telegram';
 
   // State
   let isConnected = false;
@@ -27,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let isAuthenticated = false;
   let groups = [];
   let checkInterval;
+  let telegramConnected = false;
   // Removed authInfo - not needed with Baileys
   // Removed refreshInterval - no automatic refresh
 
@@ -70,6 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Functions
   async function init() {
     try {
+      // Check WhatsApp status
       const response = await fetch(`${API_BASE_URL}/status`);
       const data = await response.json();
       
@@ -78,7 +81,10 @@ document.addEventListener('DOMContentLoaded', () => {
       authState = data.state || 'DISCONNECTED';
       isAuthenticated = data.connected;
       
-      console.log('Initial status:', { isConnected, authState, isAuthenticated });
+      console.log('Initial WhatsApp status:', { isConnected, authState, isAuthenticated });
+      
+      // Check Telegram status
+      await checkTelegramStatus();
       
       updateUI();
       
@@ -91,6 +97,31 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (error) {
       console.error('Error checking status:', error);
       statusMessage.textContent = 'Error connecting to server';
+    }
+  }
+
+  async function checkTelegramStatus() {
+    try {
+      const response = await fetch(`${TELEGRAM_API_BASE_URL}/status`);
+      const data = await response.json();
+      
+      telegramConnected = data.connected;
+      console.log('Telegram status:', { connected: telegramConnected });
+      
+      // Update Telegram status in UI if elements exist
+      const telegramStatus = document.getElementById('telegram-status');
+      if (telegramStatus) {
+        telegramStatus.textContent = telegramConnected ? 'Connected' : 'Disconnected';
+        telegramStatus.className = telegramConnected ? 'connected' : 'disconnected';
+      }
+    } catch (error) {
+      console.error('Error checking Telegram status:', error);
+      telegramConnected = false;
+      const telegramStatus = document.getElementById('telegram-status');
+      if (telegramStatus) {
+        telegramStatus.textContent = 'Error';
+        telegramStatus.className = 'disconnected';
+      }
     }
   }
 
@@ -437,7 +468,24 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const mediaText = selectedFile ? ' with media' : '';
         progressText.textContent = 'All messages sent successfully!';
-        showSendStatus(`Message${mediaText} sent successfully!`, 'success');
+        
+        // Show detailed status based on WhatsApp and Telegram results
+        let statusMessage = `Message${mediaText} sent to WhatsApp successfully!`;
+        let statusType = 'success';
+        
+        if (data.telegramResult) {
+          if (data.telegramResult.error) {
+            statusMessage += ` (Telegram failed: ${data.telegramResult.error})`;
+            statusType = 'warning';
+          } else {
+            statusMessage = `Message${mediaText} sent to both WhatsApp and Telegram successfully!`;
+          }
+        } else if (telegramConnected) {
+          statusMessage += ' (Telegram not sent - check connection)';
+          statusType = 'warning';
+        }
+        
+        showSendStatus(statusMessage, statusType);
         messageInput.value = '';
         
         // Clear media selection

@@ -7,14 +7,23 @@ const express_1 = __importDefault(require("express"));
 const path_1 = __importDefault(require("path"));
 const cors_1 = __importDefault(require("cors"));
 const dotenv_1 = __importDefault(require("dotenv"));
+const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const whatsapp_1 = __importDefault(require("./routes/whatsapp"));
+const telegram_1 = __importDefault(require("./routes/telegram"));
+const auth_1 = __importDefault(require("./routes/auth"));
 const whatsappService_1 = __importDefault(require("./services/whatsappService"));
+const telegramService_1 = __importDefault(require("./services/telegramService"));
+const databaseService_1 = __importDefault(require("./services/databaseService"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const PORT = parseInt(process.env.PORT || '3000', 10);
-app.use((0, cors_1.default)());
+app.use((0, cors_1.default)({
+    origin: true,
+    credentials: true
+}));
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
+app.use((0, cookie_parser_1.default)());
 app.use(express_1.default.static(path_1.default.join(__dirname, '../../src/frontend')));
 app.get('/api/health', (req, res) => {
     res.status(200).json({
@@ -25,11 +34,33 @@ app.get('/api/health', (req, res) => {
         version: process.version
     });
 });
+app.use('/api/auth', auth_1.default);
 app.use('/api/whatsapp', whatsapp_1.default);
+app.use('/api/telegram', telegram_1.default);
+app.get('/login', (req, res) => {
+    res.sendFile(path_1.default.join(__dirname, '../../src/frontend/login.html'));
+});
 app.get('/', (req, res) => {
     res.sendFile(path_1.default.join(__dirname, '../../src/frontend/index.html'));
 });
-whatsappService_1.default.initialize().catch(console.error);
+app.use((req, res) => {
+    res.status(404).send('Page not found');
+});
+async function initializeServices() {
+    try {
+        await databaseService_1.default.initialize();
+        await databaseService_1.default.testConnection();
+        console.log('Database connected successfully');
+        await whatsappService_1.default.initialize();
+        await telegramService_1.default.initialize();
+        console.log('All services initialized successfully');
+    }
+    catch (error) {
+        console.error('Service initialization error:', error);
+        process.exit(1);
+    }
+}
+initializeServices();
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });

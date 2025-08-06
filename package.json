@@ -32,14 +32,22 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/cookie-parser": "^1.4.9",
     "@types/multer": "^2.0.0",
+    "@types/uuid": "^10.0.0",
     "@whiskeysockets/baileys": "^6.7.8",
+    "bcrypt": "^6.0.0",
+    "connect-mysql-session": "^0.1.1",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "express-session": "^1.18.2",
     "fs-extra": "^11.3.0",
     "libsodium-wrappers": "^0.7.15",
     "multer": "^2.0.2",
+    "mysql2": "^3.14.3",
     "qrcode": "^1.5.4"
   },
   "devDependencies": {
