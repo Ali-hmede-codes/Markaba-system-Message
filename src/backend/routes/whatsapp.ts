@@ -141,14 +141,35 @@ router.post('/send', upload.single('media'), async (req: Request, res: Response)
       whatsappResults = await whatsappService.sendMessages(groupIds, message, batchSize);
     }
     
-    // Temporarily disabled Telegram sending to prevent errors
-    telegramResult = { success: true, message: 'Telegram sending disabled' };
+    // Send to Telegram if connected
+    if (telegramService.getConnectionStatus()) {
+      try {
+        if (mediaFile) {
+          telegramResult = await telegramService.sendMediaMessage(
+            mediaFile.buffer,
+            mediaFile.mimetype,
+            mediaFile.originalname,
+            message
+          );
+        } else {
+          telegramResult = await telegramService.sendMessage(message);
+        }
+      } catch (telegramError) {
+        console.error('Telegram failed:', telegramError);
+        telegramResult = { 
+          success: false, 
+          error: telegramError instanceof Error ? telegramError.message : 'Unknown error' 
+        };
+      }
+    } else {
+      telegramResult = { success: false, message: 'Telegram not connected' };
+    }
     
     res.json({ 
       success: true, 
       whatsappResults,
       telegramResult,
-      message: 'Message sent to WhatsApp groups only (Telegram disabled)'
+      message: telegramResult?.success ? 'Message sent to WhatsApp and Telegram' : 'Message sent to WhatsApp only'
     });
   } catch (error) {
     console.error('Error sending message:', error);

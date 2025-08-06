@@ -39,6 +39,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express = __importStar(require("express"));
 const multer_1 = __importDefault(require("multer"));
 const whatsappService_1 = __importDefault(require("../services/whatsappService"));
+const telegramService_1 = __importDefault(require("../services/telegramService"));
 const router = express.Router();
 const upload = (0, multer_1.default)({
     storage: multer_1.default.memoryStorage(),
@@ -145,12 +146,31 @@ router.post('/send', upload.single('media'), async (req, res) => {
         else {
             whatsappResults = await whatsappService_1.default.sendMessages(groupIds, message, batchSize);
         }
-        telegramResult = { success: true, message: 'Telegram sending disabled' };
+        if (telegramService_1.default.getConnectionStatus()) {
+            try {
+                if (mediaFile) {
+                    telegramResult = await telegramService_1.default.sendMediaMessage(mediaFile.buffer, mediaFile.mimetype, mediaFile.originalname, message);
+                }
+                else {
+                    telegramResult = await telegramService_1.default.sendMessage(message);
+                }
+            }
+            catch (telegramError) {
+                console.error('Telegram failed:', telegramError);
+                telegramResult = {
+                    success: false,
+                    error: telegramError instanceof Error ? telegramError.message : 'Unknown error'
+                };
+            }
+        }
+        else {
+            telegramResult = { success: false, message: 'Telegram not connected' };
+        }
         res.json({
             success: true,
             whatsappResults,
             telegramResult,
-            message: 'Message sent to WhatsApp groups only (Telegram disabled)'
+            message: telegramResult?.success ? 'Message sent to WhatsApp and Telegram' : 'Message sent to WhatsApp only'
         });
     }
     catch (error) {
