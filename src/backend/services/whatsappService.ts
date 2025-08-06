@@ -402,134 +402,34 @@ class WhatsAppService extends EventEmitter {
       let detectionMethods: string[] = [];
       
       try {
-        // Method 1: Check socket.chats for newsletters
-        console.log('🔍 Method 1: Checking socket.chats for newsletters...');
+        // Simple direct method: Check socket.chats for newsletters
+        console.log('🔍 Checking socket.chats for newsletter channels...');
+        
         if ((this.socket as any).chats) {
-          const chats = Object.values((this.socket as any).chats);
-          const newsletterChats = chats.filter((chat: any) => 
-            chat && chat.id && chat.id.endsWith('@newsletter')
-          );
+          // Get all channel IDs that end with '@newsletter'
+          const channelIds = Object.keys((this.socket as any).chats).filter((k) => k.endsWith('@newsletter'));
           
-          console.log(`📰 Found ${newsletterChats.length} newsletter chats in socket.chats`);
+          console.log(`📰 Found ${channelIds.length} newsletter channel IDs:`, channelIds);
           
-          for (const chat of newsletterChats) {
-            const chatObj = chat as any;
-            const channel = {
-              id: chatObj.id,
-              name: chatObj.name || chatObj.subject || chatObj.id.split('@')[0],
-              description: chatObj.description || undefined,
-              verified: chatObj.verified || false
-            };
-            channels.push(channel);
-            console.log(`✅ Added channel from socket.chats:`, channel);
+          for (const channelId of channelIds) {
+            const chat = (this.socket as any).chats[channelId];
+            if (chat) {
+              const channel = {
+                id: channelId,
+                name: chat.name || chat.subject || channelId.split('@')[0],
+                description: chat.description || undefined,
+                verified: chat.verified || false
+              };
+              channels.push(channel);
+              console.log(`✅ Added channel:`, channel);
+            }
           }
           
-          if (newsletterChats.length > 0) {
+          if (channelIds.length > 0) {
             detectionMethods.push('socket.chats');
           }
-        }
-        
-        // Method 2: Try newsletter metadata approach
-        console.log('🔍 Method 2: Checking newsletter metadata capabilities...');
-        if (typeof (this.socket as any).newsletterMetadata === 'function') {
-          console.log('📡 Newsletter metadata function is available');
-          detectionMethods.push('newsletterMetadata (available)');
         } else {
-          console.log('❌ Newsletter metadata function not available');
-        }
-        
-        // Method 3: Try groupFetchAllParticipating as fallback
-        console.log('🔍 Method 3: Trying groupFetchAllParticipating...');
-        if (typeof this.socket.groupFetchAllParticipating === 'function') {
-          try {
-            const allGroups = await this.socket.groupFetchAllParticipating();
-            const newsletterGroups = Object.entries(allGroups).filter(([id]) => id.endsWith('@newsletter'));
-            
-            console.log(`📰 Found ${newsletterGroups.length} channels via groupFetchAllParticipating`);
-            
-            for (const [id, group] of newsletterGroups) {
-              // Check if channel already exists
-              if (!channels.find(c => c.id === id)) {
-                const groupObj = group as any;
-                
-                // Try to get detailed metadata
-                let channel: Channel;
-                try {
-                  if (typeof (this.socket as any).newsletterMetadata === 'function') {
-                    const metadata = await (this.socket as any).newsletterMetadata(id);
-                    channel = {
-                      id,
-                      name: metadata?.name || groupObj.subject || id.split('@')[0],
-                      description: metadata?.description || undefined,
-                      verified: metadata?.verified || false
-                    };
-                  } else {
-                    channel = {
-                      id,
-                      name: groupObj.subject || id.split('@')[0],
-                      description: groupObj.desc || undefined,
-                      verified: false
-                    };
-                  }
-                } catch (metaErr) {
-                  // Fallback to basic info
-                  channel = {
-                    id,
-                    name: groupObj.subject || id.split('@')[0],
-                    description: groupObj.desc || undefined,
-                    verified: false
-                  };
-                }
-                
-                channels.push(channel);
-                console.log(`✅ Added channel from groupFetchAllParticipating:`, channel);
-              }
-            }
-            
-            if (newsletterGroups.length > 0) {
-              detectionMethods.push('groupFetchAllParticipating');
-            }
-          } catch (groupErr) {
-            console.log('❌ groupFetchAllParticipating failed:', groupErr);
-          }
-        } else {
-          console.log('❌ groupFetchAllParticipating function not available');
-        }
-        
-        // Method 4: Check socket.store if available
-        console.log('🔍 Method 4: Checking socket.store...');
-        if ((this.socket as any).store && (this.socket as any).store.chats) {
-          try {
-            const storeChats = Object.values((this.socket as any).store.chats);
-            const storeNewsletters = storeChats.filter((chat: any) => 
-              chat && chat.id && chat.id.endsWith('@newsletter')
-            );
-            
-            console.log(`📰 Found ${storeNewsletters.length} newsletters in socket.store.chats`);
-            
-            for (const chat of storeNewsletters) {
-              const chatObj = chat as any;
-              // Check if channel already exists
-              if (!channels.find(c => c.id === chatObj.id)) {
-                const channel = {
-                  id: chatObj.id,
-                  name: chatObj.name || chatObj.subject || chatObj.id.split('@')[0],
-                  description: chatObj.description || undefined,
-                  verified: chatObj.verified || false
-                };
-                channels.push(channel);
-                console.log(`✅ Added channel from socket.store:`, channel);
-              }
-            }
-            
-            if (storeNewsletters.length > 0) {
-              detectionMethods.push('socket.store.chats');
-            }
-          } catch (storeErr) {
-            console.log('❌ socket.store access failed:', storeErr);
-          }
-        } else {
-          console.log('❌ socket.store not available');
+          console.log('❌ socket.chats not available');
         }
         
         // Final results

@@ -285,70 +285,154 @@ class WhatsAppService extends events_1.EventEmitter {
             console.error('Background refresh failed:', err);
         }
     }
+    async addChannelById(channelId, name) {
+        if (!channelId.endsWith('@newsletter')) {
+            throw new Error('Invalid channel ID format - must end with @newsletter');
+        }
+        try {
+            let channelName = name || channelId.split('@')[0];
+            let description;
+            let verified = false;
+            if (typeof this.socket.newsletterMetadata === 'function') {
+                try {
+                    const metadata = await this.socket.newsletterMetadata(channelId);
+                    channelName = metadata?.name || channelName;
+                    description = metadata?.description;
+                    verified = metadata?.verified || false;
+                }
+                catch (metaErr) {
+                    console.log(`Could not fetch metadata for ${channelId}, using basic info`);
+                }
+            }
+            let cached = { channels: [], timestamp: 0 };
+            try {
+                cached = await fs.readJson(this.channelsCachePath);
+            }
+            catch (err) {
+            }
+            const existingIndex = cached.channels.findIndex((c) => c.id === channelId);
+            const newChannel = {
+                id: channelId,
+                name: channelName,
+                description,
+                verified
+            };
+            if (existingIndex >= 0) {
+                cached.channels[existingIndex] = newChannel;
+                console.log(`Updated channel: ${channelId}`);
+            }
+            else {
+                cached.channels.push(newChannel);
+                console.log(`Added new channel: ${channelId}`);
+            }
+            cached.timestamp = Date.now();
+            await fs.writeJson(this.channelsCachePath, cached);
+            return true;
+        }
+        catch (error) {
+            console.error(`Failed to add channel ${channelId}:`, error);
+            return false;
+        }
+    }
     async getChannels(forceRefresh = false) {
         if (!this.socket)
             throw new Error('Socket not initialized');
+        console.log('🔍 Starting automatic channel detection...');
         if (!forceRefresh) {
             try {
                 if (await fs.pathExists(this.channelsCachePath)) {
                     const cacheData = await fs.readJson(this.channelsCachePath);
                     if (Date.now() - cacheData.timestamp < this.cacheMaxAge && Array.isArray(cacheData.channels)) {
-                        console.log(`Returning ${cacheData.channels.length} cached channels (age: ${Math.round((Date.now() - cacheData.timestamp) / 1000)}s)`);
+                        console.log(`📋 Returning ${cacheData.channels.length} cached channels (age: ${Math.round((Date.now() - cacheData.timestamp) / 1000)}s)`);
+                        console.log('📊 Cached Channels Array:', JSON.stringify(cacheData.channels, null, 2));
                         return cacheData.channels;
                     }
                 }
             }
             catch (err) {
-                console.warn('Channels cache load failed:', err);
+                console.warn('⚠️ Channels cache load failed:', err);
+                try {
+                    await fs.remove(this.channelsCachePath);
+                }
+                catch (unlinkErr) {
+                    console.warn('Could not delete corrupted cache:', unlinkErr);
+                }
+            }
+        }
+        else {
+            try {
+                if (await fs.pathExists(this.channelsCachePath)) {
+                    await fs.remove(this.channelsCachePath);
+                    console.log('🗑️ Cleared channels cache for force refresh');
+                }
+            }
+            catch (err) {
+                console.warn('⚠️ Failed to clear channels cache:', err);
             }
         }
         if (!this.isConnected || this.authState !== 'READY') {
             throw new Error(`WhatsApp not ready (state: ${this.authState})`);
         }
         try {
-            console.log('Fetching WhatsApp channels...');
+            console.log('⏳ Waiting for socket to be ready...');
+            await (0, baileys_1.delay)(3000);
+            console.log('🔄 Fetching channels from WhatsApp using multiple detection methods...');
             const channels = [];
+            let detectionMethods = [];
             try {
-                const chats = Object.values(this.socket.chats || {});
-                console.log(`DEBUG: Total chats found: ${chats.length}`);
-                console.log('DEBUG: Chat IDs and types:');
-                chats.forEach((chat, index) => {
-                    if (chat && chat.id) {
-                        console.log(`  ${index + 1}. ID: ${chat.id}, Type: ${chat.id.split('@')[1]}, Name: ${chat.name || chat.subject || 'N/A'}`);
+                console.log('🔍 Checking socket.chats for newsletter channels...');
+                if (this.socket.chats) {
+                    const channelIds = Object.keys(this.socket.chats).filter((k) => k.endsWith('@newsletter'));
+                    console.log(`📰 Found ${channelIds.length} newsletter channel IDs:`, channelIds);
+                    for (const channelId of channelIds) {
+                        const chat = this.socket.chats[channelId];
+                        if (chat) {
+                            const channel = {
+                                id: channelId,
+                                name: chat.name || chat.subject || channelId.split('@')[0],
+                                description: chat.description || undefined,
+                                verified: chat.verified || false
+                            };
+                            channels.push(channel);
+                            console.log(`✅ Added channel:`, channel);
+                        }
                     }
-                });
-                for (const chat of chats) {
-                    if (chat && chat.id && chat.id.endsWith('@newsletter')) {
-                        console.log(`DEBUG: Found newsletter chat: ${chat.id}`);
-                        channels.push({
-                            id: chat.id,
-                            name: chat.name || chat.subject || chat.id.split('@')[0],
-                            description: chat.description || undefined,
-                            verified: chat.verified || false
-                        });
+                    if (channelIds.length > 0) {
+                        detectionMethods.push('socket.chats');
                     }
                 }
-                console.log(`Found ${channels.length} channels`);
+                else {
+                    console.log('❌ socket.chats not available');
+                }
+                console.log('\n🎯 CHANNEL DETECTION COMPLETE');
+                console.log('='.repeat(50));
+                console.log(`📊 Total Channels Found: ${channels.length}`);
+                console.log(`🔧 Detection Methods Used: ${detectionMethods.join(', ') || 'None successful'}`);
+                console.log('📋 Channels Array:');
+                console.log(JSON.stringify(channels, null, 2));
+                console.log('='.repeat(50));
                 const cacheData = {
                     channels,
-                    timestamp: Date.now()
+                    timestamp: Date.now(),
+                    detectionMethods
                 };
                 try {
                     await fs.writeJson(this.channelsCachePath, cacheData);
-                    console.log('Channels cached successfully');
+                    console.log('💾 Channels cached successfully');
                 }
                 catch (cacheErr) {
-                    console.warn('Failed to cache channels:', cacheErr);
+                    console.warn('⚠️ Failed to cache channels:', cacheErr);
                 }
                 return channels;
             }
             catch (channelErr) {
-                console.warn('Failed to fetch channels - this feature is experimental:', channelErr);
+                console.warn('⚠️ Failed to fetch channels - this feature is experimental:', channelErr);
+                console.log('📋 Empty Channels Array: []');
                 return [];
             }
         }
         catch (error) {
-            console.error('Error fetching channels:', error);
+            console.error('❌ Error fetching channels:', error);
             throw new Error(`Failed to fetch channels: ${error.message}`);
         }
     }
@@ -498,8 +582,19 @@ class WhatsAppService extends events_1.EventEmitter {
                             text: message
                         };
                     }
+                    let sendResult;
+                    if (typeof this.socket.newsletterSendMessage === 'function') {
+                        try {
+                            sendResult = await this.socket.newsletterSendMessage(channelId, messageContent);
+                            console.log(`✓ ${mediaBuffer ? 'Media m' : 'M'}essage sent to channel ${channelId} via newsletterSendMessage`);
+                            return { channelId, success: true };
+                        }
+                        catch (newsletterErr) {
+                            console.log(`Newsletter method failed for ${channelId}, trying standard sendMessage:`, newsletterErr.message);
+                        }
+                    }
                     await this.socket.sendMessage(channelId, messageContent);
-                    console.log(`✓ ${mediaBuffer ? 'Media m' : 'M'}essage sent to channel ${channelId}`);
+                    console.log(`✓ ${mediaBuffer ? 'Media m' : 'M'}essage sent to channel ${channelId} via sendMessage`);
                     return { channelId, success: true };
                 }
                 catch (error) {
