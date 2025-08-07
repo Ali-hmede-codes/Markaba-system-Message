@@ -89,7 +89,7 @@ router.post('/send-media', upload.single('media'), async (req, res) => {
     }
 
     // Validate file type
-    const allowedTypes = /jpeg|jpg|png|gif|mp4|avi|mov|mp3|wav|pdf|doc|docx|txt/;
+    const allowedTypes = /jpeg|jpg|png|gif|webp|mp4|avi|mov|mp3|wav|pdf|doc|docx|txt/;
     const fileExtension = file.originalname.split('.').pop()?.toLowerCase();
     
     if (!fileExtension || !allowedTypes.test(fileExtension)) {
