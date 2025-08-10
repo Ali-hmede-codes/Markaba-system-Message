@@ -40,6 +40,7 @@ const express = __importStar(require("express"));
 const multer_1 = __importDefault(require("multer"));
 const whatsappService_1 = __importDefault(require("../services/whatsappService"));
 const telegramService_1 = __importDefault(require("../services/telegramService"));
+const mediaTypes_1 = require("../config/mediaTypes");
 const router = express.Router();
 const upload = (0, multer_1.default)({
     storage: multer_1.default.memoryStorage(),
@@ -47,14 +48,11 @@ const upload = (0, multer_1.default)({
         fileSize: 50 * 1024 * 1024,
     },
     fileFilter: (req, file, cb) => {
-        const allowedTypes = /jpeg|jpg|png|gif|webp|mp4|avi|mov|mp3|wav|pdf|doc|docx|txt/;
-        const extname = allowedTypes.test(file.originalname.toLowerCase());
-        const mimetype = allowedTypes.test(file.mimetype);
-        if (mimetype && extname) {
+        if ((0, mediaTypes_1.isFileTypeSupported)(file.originalname, file.mimetype)) {
             return cb(null, true);
         }
         else {
-            cb(new Error('Invalid file type. Only images, videos, audio, and documents are allowed.'));
+            cb(new Error('Invalid file type. Only supported images, videos, audio, documents, and archives are allowed.'));
         }
     }
 });

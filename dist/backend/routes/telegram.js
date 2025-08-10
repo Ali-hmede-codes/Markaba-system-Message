@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const multer_1 = __importDefault(require("multer"));
 const telegramService_1 = __importDefault(require("../services/telegramService"));
+const mediaTypes_1 = require("../config/mediaTypes");
 const router = express_1.default.Router();
 const upload = (0, multer_1.default)({
     storage: multer_1.default.memoryStorage(),
@@ -81,12 +82,10 @@ router.post('/send-media', upload.single('media'), async (req, res) => {
                 error: 'Media file is required'
             });
         }
-        const allowedTypes = /jpeg|jpg|png|gif|webp|mp4|avi|mov|mp3|wav|pdf|doc|docx|txt/;
-        const fileExtension = file.originalname.split('.').pop()?.toLowerCase();
-        if (!fileExtension || !allowedTypes.test(fileExtension)) {
+        if (!(0, mediaTypes_1.isFileTypeSupported)(file.originalname, file.mimetype)) {
             return res.status(400).json({
                 success: false,
-                error: 'Unsupported file type'
+                error: 'Unsupported file type. Only supported images, videos, audio, documents, and archives are allowed.'
             });
         }
         const result = await telegramService_1.default.sendMediaMessage(file.buffer, file.mimetype, file.originalname, message || '');

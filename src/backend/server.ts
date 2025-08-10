@@ -27,6 +27,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// Security headers to prevent search engine indexing
+app.use((req: Request, res: Response, next) => {
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet, noimageindex');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, private');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
+});
+
 // Health check endpoint
 app.get('/api/health', async (req: Request, res: Response) => {
   let dbStatus = 'unknown';
@@ -74,6 +83,12 @@ app.get('/', (req: Request, res: Response) => {
 // Dashboard route - serves main app after authentication
 app.get('/dashboard', checkAuth, (req: Request, res: Response) => {
   res.sendFile(path.join(__dirname, '../../src/frontend/index.html'));
+});
+
+// Serve robots.txt specifically
+app.get('/robots.txt', (req: Request, res: Response) => {
+  res.type('text/plain');
+  res.sendFile(path.join(__dirname, '../../src/frontend/robots.txt'));
 });
 
 // Serve static files after routes to prevent conflicts

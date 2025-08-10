@@ -38,6 +38,7 @@ const qrcode = __importStar(require("qrcode"));
 const fs = __importStar(require("fs-extra"));
 const path = __importStar(require("path"));
 const events_1 = require("events");
+const mediaTypes_1 = require("../config/mediaTypes");
 class WhatsAppService extends events_1.EventEmitter {
     socket = null;
     qrCode = null;
@@ -313,27 +314,20 @@ class WhatsAppService extends events_1.EventEmitter {
                             messageContent = {
                                 image: mediaBuffer,
                                 caption: message.trim(),
-                                fileName: fileName || 'image.jpg'
+                                fileName: fileName || (0, mediaTypes_1.getDefaultFilename)(mediaType)
                             };
                         }
                         else if (mediaType.startsWith('video/')) {
-                            let defaultFileName = 'video.mp4';
-                            if (mediaType.includes('quicktime') || mediaType.includes('mov')) {
-                                defaultFileName = 'video.mov';
-                            }
-                            else if (mediaType.includes('avi')) {
-                                defaultFileName = 'video.avi';
-                            }
                             messageContent = {
                                 video: mediaBuffer,
                                 caption: message.trim(),
-                                fileName: fileName || defaultFileName
+                                fileName: fileName || (0, mediaTypes_1.getDefaultFilename)(mediaType)
                             };
                         }
                         else if (mediaType.startsWith('audio/')) {
                             messageContent = {
                                 audio: mediaBuffer,
-                                fileName: fileName || 'audio.mp3'
+                                fileName: fileName || (0, mediaTypes_1.getDefaultFilename)(mediaType)
                             };
                             if (message.trim()) {
                                 await this.socket.sendMessage(groupId, { text: message.trim() });
@@ -342,7 +336,7 @@ class WhatsAppService extends events_1.EventEmitter {
                         else {
                             messageContent = {
                                 document: mediaBuffer,
-                                fileName: fileName || 'document',
+                                fileName: fileName || (0, mediaTypes_1.getDefaultFilename)(mediaType),
                                 caption: message.trim()
                             };
                         }

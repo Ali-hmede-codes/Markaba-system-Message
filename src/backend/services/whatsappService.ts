@@ -3,6 +3,7 @@ import * as qrcode from 'qrcode';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { EventEmitter } from 'events';
+import { getDefaultFilename } from '../config/mediaTypes';
 
 interface Group {
   id: string;
@@ -328,26 +329,18 @@ class WhatsAppService extends EventEmitter {
               messageContent = {
                 image: mediaBuffer,
                 caption: message.trim(),
-                fileName: fileName || 'image.jpg'
+                fileName: fileName || getDefaultFilename(mediaType)
               };
             } else if (mediaType.startsWith('video/')) {
-              // Use appropriate default extension based on media type
-              let defaultFileName = 'video.mp4';
-              if (mediaType.includes('quicktime') || mediaType.includes('mov')) {
-                defaultFileName = 'video.mov';
-              } else if (mediaType.includes('avi')) {
-                defaultFileName = 'video.avi';
-              }
-              
               messageContent = {
                 video: mediaBuffer,
                 caption: message.trim(),
-                fileName: fileName || defaultFileName
+                fileName: fileName || getDefaultFilename(mediaType)
               };
             } else if (mediaType.startsWith('audio/')) {
               messageContent = {
                 audio: mediaBuffer,
-                fileName: fileName || 'audio.mp3'
+                fileName: fileName || getDefaultFilename(mediaType)
               };
               // Send caption as separate text message for audio
               if (message.trim()) {
@@ -357,7 +350,7 @@ class WhatsAppService extends EventEmitter {
               // Send as document for other file types
               messageContent = {
                 document: mediaBuffer,
-                fileName: fileName || 'document',
+                fileName: fileName || getDefaultFilename(mediaType),
                 caption: message.trim()
               };
             }

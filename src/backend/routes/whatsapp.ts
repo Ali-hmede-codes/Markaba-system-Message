@@ -3,6 +3,7 @@ import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import whatsappService from '../services/whatsappService';
 import telegramService from '../services/telegramService';
+import { createFileValidationRegex, isFileTypeSupported } from '../config/mediaTypes';
 
 const router: Router = express.Router();
 
@@ -13,15 +14,11 @@ const upload = multer({
     fileSize: 50 * 1024 * 1024, // 50MB limit
   },
   fileFilter: (req, file, cb) => {
-    // Allow images, videos, audio, and documents
-    const allowedTypes = /jpeg|jpg|png|gif|webp|mp4|avi|mov|mp3|wav|pdf|doc|docx|txt/;
-    const extname = allowedTypes.test(file.originalname.toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
-    
-    if (mimetype && extname) {
+    // Use centralized file type validation
+    if (isFileTypeSupported(file.originalname, file.mimetype)) {
       return cb(null, true);
     } else {
-      cb(new Error('Invalid file type. Only images, videos, audio, and documents are allowed.'));
+      cb(new Error('Invalid file type. Only supported images, videos, audio, documents, and archives are allowed.'));
     }
   }
 });

@@ -25,6 +25,13 @@ app.use((0, cors_1.default)({
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use((0, cookie_parser_1.default)());
+app.use((req, res, next) => {
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet, noimageindex');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, private');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    next();
+});
 app.get('/api/health', async (req, res) => {
     let dbStatus = 'unknown';
     try {
@@ -61,6 +68,10 @@ app.get('/', (req, res) => {
 });
 app.get('/dashboard', auth_2.checkAuth, (req, res) => {
     res.sendFile(path_1.default.join(__dirname, '../../src/frontend/index.html'));
+});
+app.get('/robots.txt', (req, res) => {
+    res.type('text/plain');
+    res.sendFile(path_1.default.join(__dirname, '../../src/frontend/robots.txt'));
 });
 app.use(express_1.default.static(path_1.default.join(__dirname, '../../src/frontend')));
 app.use((req, res) => {

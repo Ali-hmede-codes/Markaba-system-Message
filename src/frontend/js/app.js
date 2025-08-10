@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let isAuthenticated = false;
    let groups = [];
    let checkInterval;
+   let isSendingMessage = false; // Flag to prevent duplicate sends
   // Removed authInfo - not needed with Baileys
   // Removed refreshInterval - no automatic refresh
 
@@ -75,11 +76,8 @@ document.addEventListener('DOMContentLoaded', () => {
     sendMessage();
   });
   
-  // Keep the button click for backward compatibility
-  sendBtn.addEventListener('click', function(e) {
-    e.preventDefault();
-    sendMessage();
-  });
+  // Remove duplicate button click listener to prevent double sending
+  // The form submit handler above will handle both Enter key and button clicks
 
 
 
@@ -396,7 +394,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function sendMessage() {
+    // Prevent duplicate sends if already in progress
+    if (isSendingMessage) {
+      console.log('Message sending already in progress, ignoring duplicate request');
+      return;
+    }
+    
     try {
+      isSendingMessage = true; // Set flag to prevent duplicates
+      
       // Debug: Check if groups list exists and has checkboxes
       const groupsListElement = document.getElementById('groups-list');
       const allCheckboxes = document.querySelectorAll('#groups-list input[type="checkbox"]');
@@ -516,6 +522,7 @@ document.addEventListener('DOMContentLoaded', () => {
       showSendStatus(`Error: ${error.message}`, 'error');
     } finally {
       sendBtn.disabled = false;
+      isSendingMessage = false; // Reset flag to allow future sends
     }
   }
 
