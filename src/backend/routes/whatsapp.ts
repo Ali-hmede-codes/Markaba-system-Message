@@ -5,6 +5,71 @@ import whatsappService from '../services/whatsappService';
 import telegramService from '../services/telegramService';
 import { createFileValidationRegex, isFileTypeSupported } from '../config/mediaTypes';
 
+// Backend duplicate prevention
+interface MessageCache {
+  fingerprint: string;
+  timestamp: number;
+  groups: string[];
+  message: string;
+}
+
+const messageCache = new Map<string, MessageCache>();
+const currentBatches = new Set<string>(); // Track currently processing batches
+let lastCompletedBatch: string | null = null; // Track last successfully completed batch
+
+// Create message fingerprint for backend duplicate detection
+function createMessageFingerprint(message: string, groupIds: string[], hasMedia: boolean): string {
+  const groupsString = groupIds.sort().join(',');
+  const mediaFlag = hasMedia ? 'media' : 'text';
+  const content = `${message}|${groupsString}|${mediaFlag}`;
+  
+  // Simple hash function
+  let hash = 0;
+  for (let i = 0; i < content.length; i++) {
+    const char = content.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return hash.toString();
+}
+
+// Check for duplicate messages
+function isDuplicateMessage(fingerprint: string): boolean {
+  // Check if this batch is currently being processed
+  if (currentBatches.has(fingerprint)) {
+    return true;
+  }
+  
+  // Check if this was the last completed batch
+  if (lastCompletedBatch === fingerprint) {
+    return true;
+  }
+  
+  return false;
+}
+
+// Store message in cache and mark as processing
+function startBatchProcessing(fingerprint: string, message: string, groups: string[]): void {
+  currentBatches.add(fingerprint);
+  messageCache.set(fingerprint, {
+    fingerprint,
+    timestamp: Date.now(),
+    groups,
+    message
+  });
+}
+
+// Mark batch as completed
+function completeBatchProcessing(fingerprint: string): void {
+  currentBatches.delete(fingerprint);
+  lastCompletedBatch = fingerprint;
+}
+
+// Clean up failed batch
+function cleanupFailedBatch(fingerprint: string): void {
+  currentBatches.delete(fingerprint);
+}
+
 const router: Router = express.Router();
 
 // Configure multer for file uploads
@@ -86,6 +151,8 @@ router.get('/groups', async (req: Request, res: Response) => {
 
 // Send message to groups (with optional media)
 router.post('/send', upload.single('media'), async (req: Request, res: Response) => {
+  let messageFingerprint: string | null = null;
+  
   try {
     let { groupIds, message, batchSize = 3 } = req.body;
     const mediaFile = req.file;
@@ -119,6 +186,21 @@ router.post('/send', upload.single('media'), async (req: Request, res: Response)
     if (!message || message.trim() === '') {
       return res.status(400).json({ success: false, message: 'Message cannot be empty' });
     }
+    
+    // Check for duplicate messages on backend
+    const hasMedia = !!mediaFile;
+    messageFingerprint = createMessageFingerprint(message, groupIds, hasMedia);
+    
+    if (isDuplicateMessage(messageFingerprint)) {
+      console.log('Duplicate message detected on backend:', messageFingerprint);
+      return res.status(429).json({ 
+        success: false, 
+        message: 'Duplicate message detected. Please wait before sending the same message again.' 
+      });
+    }
+    
+    // Start batch processing to prevent duplicates
+    startBatchProcessing(messageFingerprint, message, groupIds);
     
     let whatsappResults;
     let telegramResult = null;
@@ -166,6 +248,9 @@ router.post('/send', upload.single('media'), async (req: Request, res: Response)
       telegramResult = { success: false, message: 'Telegram not connected' };
     }
     
+    // Mark batch as completed since messages were processed
+    completeBatchProcessing(messageFingerprint);
+    
     // Prepare response message
     let responseMessage = 'Message sent to WhatsApp groups';
     if (telegramResult?.success) {
@@ -180,12 +265,20 @@ router.post('/send', upload.single('media'), async (req: Request, res: Response)
     });
   } catch (error) {
     console.error('Error sending message:', error);
+    
+    // Clean up failed batch if fingerprint was created
+    if (messageFingerprint) {
+      cleanupFailedBatch(messageFingerprint);
+    }
+    
     res.status(500).json({ success: false, message: (error as Error).message });
   }
 });
 
 // Send text-only message (legacy endpoint)
 router.post('/send-text', async (req: Request, res: Response) => {
+  let messageFingerprint: string | null = null;
+  
   try {
     const { groupIds, message, batchSize = 3 } = req.body;
     
@@ -197,10 +290,34 @@ router.post('/send-text', async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, message: 'Message cannot be empty' });
     }
     
+    // Check for duplicate messages on backend
+    messageFingerprint = createMessageFingerprint(message, groupIds, false);
+    
+    if (isDuplicateMessage(messageFingerprint)) {
+      console.log('Duplicate text message detected on backend:', messageFingerprint);
+      return res.status(429).json({ 
+        success: false, 
+        message: 'Duplicate message detected. Please wait before sending the same message again.' 
+      });
+    }
+    
+    // Start batch processing to prevent duplicates
+    startBatchProcessing(messageFingerprint, message, groupIds);
+    
     const results = await whatsappService.sendMessages(groupIds, message, batchSize);
+    
+    // Mark batch as completed
+    completeBatchProcessing(messageFingerprint);
+    
     res.json({ success: true, results });
   } catch (error) {
-    console.error('Error sending message:', error);
+    console.error('Error sending text message:', error);
+    
+    // Clean up failed batch if fingerprint was created
+    if (messageFingerprint) {
+      cleanupFailedBatch(messageFingerprint);
+    }
+    
     res.status(500).json({ success: false, message: (error as Error).message });
   }
 })

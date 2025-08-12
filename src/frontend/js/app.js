@@ -34,6 +34,12 @@ document.addEventListener('DOMContentLoaded', () => {
    let groups = [];
    let checkInterval;
    let isSendingMessage = false; // Flag to prevent duplicate sends
+   
+   // Enhanced duplicate prevention system
+   let lastMessageFingerprint = null;
+   let messageSendHistory = new Map(); // Store recent message sends
+   let messageTimeoutId = null;
+   let currentBatchFingerprint = null; // Track current batch being sent
   // Removed authInfo - not needed with Baileys
   // Removed refreshInterval - no automatic refresh
 
@@ -69,6 +75,12 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('Manual refresh groups clicked');
     fetchGroups(true);
   });
+  
+  // Add page visibility and focus event listeners for duplicate prevention
+  document.addEventListener('visibilitychange', handlePageVisibilityChange);
+  window.addEventListener('focus', handleWindowFocus);
+  window.addEventListener('blur', handleWindowBlur);
+  window.addEventListener('beforeunload', handlePageUnload);
   
   // Handle form submission for sending messages
   document.getElementById('message-form').addEventListener('submit', function(e) {
@@ -401,7 +413,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     try {
+      // Get message details for fingerprinting
+      const message = messageInput.value.trim();
+      const selectedGroups = Array.from(document.querySelectorAll('#groups-list input[type="checkbox"]:checked'))
+        .map(checkbox => checkbox.value);
+      const batchSize = parseInt(document.getElementById('batch-size').value) || 5;
+      const hasMedia = selectedFile !== null;
+      
+      // Create unique message fingerprint
+      const messageFingerprint = createMessageFingerprint(message, selectedGroups, hasMedia);
+      
+      // Check for duplicate message attempts
+      if (isDuplicateMessage(messageFingerprint)) {
+        console.log('Duplicate message detected, blocking send');
+        showSendStatus('Duplicate message detected. Please wait before sending the same message again.', 'warning');
+        return;
+      }
+      
       isSendingMessage = true; // Set flag to prevent duplicates
+      
+      // Set current batch fingerprint to prevent duplicates during sending
+      currentBatchFingerprint = messageFingerprint;
       
       // Debug: Check if groups list exists and has checkboxes
       const groupsListElement = document.getElementById('groups-list');
@@ -413,13 +445,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log('Debug - Checked checkboxes found:', checkedCheckboxes.length);
       console.log('Debug - Groups array length:', groups.length);
       
-      const selectedGroups = Array.from(checkedCheckboxes)
-        .map(checkbox => checkbox.value);
-      
       console.log('Debug - Selected groups:', selectedGroups);
-      
-      const message = messageInput.value.trim();
-      const batchSize = parseInt(document.getElementById('batch-size').value) || 5;
       
       if (selectedGroups.length === 0) {
         if (allCheckboxes.length === 0) {
@@ -468,8 +494,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const groupData = await groupResponse.json();
       let groupSuccess = false;
       
-      if (groupData.success) {
+      if (groupResponse.ok && groupData.success) {
         groupSuccess = true;
+        
         // Simulate batch progress for groups
         for (let i = 1; i <= totalBatches; i++) {
           const progress = (i / (totalBatches * 2)) * 100; // Half progress for groups
@@ -480,12 +507,21 @@ document.addEventListener('DOMContentLoaded', () => {
             await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5 second delay
           }
         }
+      } else if (groupResponse.status === 429) {
+        // Handle duplicate message detection from backend
+        progressContainer.style.display = 'none';
+        showSendStatus(`Duplicate Prevention: ${groupData.error || 'Please wait before sending the same message again.'}`, 'warning');
+        console.log('Backend detected duplicate message');
+        return;
       }
       
       // Complete the progress bar
       progressFill.style.width = '100%';
       
       if (groupSuccess) {
+        // Store the message fingerprint to prevent duplicates
+        storeMessageSend(messageFingerprint);
+        
         const mediaText = selectedFile ? ' with media' : '';
         progressText.textContent = 'All messages sent successfully!';
         
@@ -523,6 +559,9 @@ document.addEventListener('DOMContentLoaded', () => {
     } finally {
       sendBtn.disabled = false;
       isSendingMessage = false; // Reset flag to allow future sends
+      
+      // Reset current batch fingerprint on error
+      currentBatchFingerprint = null;
     }
   }
 
@@ -532,6 +571,79 @@ document.addEventListener('DOMContentLoaded', () => {
     sendStatus.textContent = message;
     sendStatus.className = type;
   }
+  
+  // Enhanced duplicate prevention functions
+  function createMessageFingerprint(message, groupIds, hasMedia) {
+    // Create a unique fingerprint based on message content, groups, and media
+    const groupsString = Array.isArray(groupIds) ? groupIds.sort().join(',') : '';
+    const mediaFlag = hasMedia ? 'media' : 'text';
+    const content = `${message}|${groupsString}|${mediaFlag}`;
+    
+    // Simple hash function for fingerprinting
+    let hash = 0;
+    for (let i = 0; i < content.length; i++) {
+      const char = content.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return hash.toString();
+  }
+  
+  function isDuplicateMessage(fingerprint) {
+    // Check if this exact message is currently being sent
+    if (currentBatchFingerprint === fingerprint) {
+      return true; // Same batch is currently being processed
+    }
+    
+    // Check if this exact message was the last successfully sent batch
+    if (lastMessageFingerprint === fingerprint) {
+      return true; // Duplicate of last successful batch
+    }
+    
+    return false;
+  }
+  
+  function storeMessageSend(fingerprint) {
+    // Store as last successfully sent message
+    lastMessageFingerprint = fingerprint;
+    // Clear current batch fingerprint since batch is complete
+    currentBatchFingerprint = null;
+  }
+   
+   // Page visibility and focus event handlers
+    function handlePageVisibilityChange() {
+      if (document.hidden) {
+        console.log('Page became hidden - preserving message send state');
+        // Don't reset isSendingMessage when page becomes hidden
+      } else {
+        console.log('Page became visible - checking message send state');
+        // When page becomes visible again, check if we should reset the sending state
+        // Only reset if no batch is currently being processed
+        if (!isSendingMessage && currentBatchFingerprint) {
+          console.log('Resetting current batch state after page visibility change');
+          currentBatchFingerprint = null;
+        }
+      }
+    }
+   
+   function handleWindowFocus() {
+     console.log('Window gained focus');
+     // Additional check when window gains focus
+     if (isSendingMessage) {
+       console.log('Message sending in progress, maintaining state');
+     }
+   }
+   
+   function handleWindowBlur() {
+     console.log('Window lost focus');
+     // Don't reset sending state when window loses focus
+   }
+   
+   function handlePageUnload() {
+      console.log('Page unloading - cleaning up');
+      // Clean up state before page unloads
+      currentBatchFingerprint = null;
+    }
 
   async function logout() {
     try {
