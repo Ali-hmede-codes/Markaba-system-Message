@@ -426,6 +426,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Check for duplicate message attempts
       if (isDuplicateMessage(messageFingerprint)) {
         console.log('Duplicate message detected, blocking send');
+        document.getElementById('batch-progress').style.display = 'none';
         showSendStatus('Duplicate message detected. Please wait before sending the same message again.', 'warning');
         return;
       }
@@ -434,6 +435,18 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // Set current batch fingerprint to prevent duplicates during sending
       currentBatchFingerprint = messageFingerprint;
+      
+      // Show progress bar immediately when send starts (before validation)
+      const progressContainer = document.getElementById('batch-progress');
+      const progressText = document.getElementById('progress-text');
+      const progressFill = document.getElementById('progress-fill');
+      
+      // Force immediate display and DOM update
+      progressContainer.style.display = 'block';
+      progressContainer.offsetHeight; // Trigger reflow for mobile
+      
+      progressText.textContent = 'Validating message and groups...';
+      progressFill.style.width = '5%'; // Small initial progress
       
       // Debug: Check if groups list exists and has checkboxes
       const groupsListElement = document.getElementById('groups-list');
@@ -448,6 +461,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log('Debug - Selected groups:', selectedGroups);
       
       if (selectedGroups.length === 0) {
+        progressContainer.style.display = 'none'; // Hide progress bar on validation error
         if (allCheckboxes.length === 0) {
           showSendStatus('No groups available. Please load groups first by clicking "Refresh Groups" or ensure WhatsApp is connected.', 'error');
         } else {
@@ -457,6 +471,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       
       if (message === '') {
+        progressContainer.style.display = 'none'; // Hide progress bar on validation error
         showSendStatus('Please enter a message', 'error');
         return;
       }
@@ -464,19 +479,11 @@ document.addEventListener('DOMContentLoaded', () => {
       sendBtn.disabled = true;
       showSendStatus('Preparing to send message...', '');
       
-      // Show progress bar immediately for better mobile UX
-      const progressContainer = document.getElementById('batch-progress');
-      const progressText = document.getElementById('progress-text');
-      const progressFill = document.getElementById('progress-fill');
-      
       const totalBatches = Math.ceil(selectedGroups.length / batchSize);
       
-      // Force immediate display and DOM update
-      progressContainer.style.display = 'block';
-      progressContainer.offsetHeight; // Trigger reflow for mobile
-      
+      // Update progress bar with batch information
       progressText.textContent = `Preparing batches... (${selectedGroups.length} groups, ${totalBatches} batches)`;
-      progressFill.style.width = '0%';
+      progressFill.style.width = '10%'; // Show preparation progress
       
       // Small delay to ensure progress bar is visible before starting
       await new Promise(resolve => setTimeout(resolve, 50));
