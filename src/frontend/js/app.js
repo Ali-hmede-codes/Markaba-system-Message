@@ -464,15 +464,22 @@ document.addEventListener('DOMContentLoaded', () => {
       sendBtn.disabled = true;
       showSendStatus('Preparing to send message...', '');
       
-      // Show progress bar
+      // Show progress bar immediately for better mobile UX
       const progressContainer = document.getElementById('batch-progress');
       const progressText = document.getElementById('progress-text');
       const progressFill = document.getElementById('progress-fill');
       
       const totalBatches = Math.ceil(selectedGroups.length / batchSize);
+      
+      // Force immediate display and DOM update
       progressContainer.style.display = 'block';
+      progressContainer.offsetHeight; // Trigger reflow for mobile
+      
       progressText.textContent = `Preparing batches... (${selectedGroups.length} groups, ${totalBatches} batches)`;
       progressFill.style.width = '0%';
+      
+      // Small delay to ensure progress bar is visible before starting
+      await new Promise(resolve => setTimeout(resolve, 50));
       
       // Prepare form data
       const formData = new FormData();
@@ -497,11 +504,14 @@ document.addEventListener('DOMContentLoaded', () => {
       if (groupResponse.ok && groupData.success) {
         groupSuccess = true;
         
-        // Simulate batch progress for groups
+        // Show real-time batch progress for groups
         for (let i = 1; i <= totalBatches; i++) {
           const progress = (i / (totalBatches * 2)) * 100; // Half progress for groups
           progressText.textContent = `Processing groups batch ${i} of ${totalBatches}...`;
           progressFill.style.width = `${progress}%`;
+          
+          // Force immediate DOM update for mobile devices
+          progressFill.offsetHeight; // Trigger reflow
           
           if (i < totalBatches) {
             await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5 second delay
@@ -542,10 +552,10 @@ document.addEventListener('DOMContentLoaded', () => {
           if (previewContent) previewContent.innerHTML = '';
         }
         
-        // Hide progress after 3 seconds
+        // Hide progress after 1.5 seconds for better mobile UX
         setTimeout(() => {
           progressContainer.style.display = 'none';
-        }, 3000);
+        }, 1500);
       } else {
         progressContainer.style.display = 'none';
         let errorMessage = 'Failed to send message';
