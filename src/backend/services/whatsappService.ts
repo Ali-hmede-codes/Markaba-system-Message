@@ -20,14 +20,64 @@ interface LinkPreview {
 
 // URL detection utility function
 function detectUrls(text: string): string[] {
-  const urlRegex = /(https?:\/\/(?:[-\w.])+(?:[:\d]+)?(?:\/(?:[\w\/_.])*(?:\?(?:[\w&=%.])*)?(?:#(?:[\w.])*)?)?)/gi;
+  // Enhanced regex to capture all URL formats including those with special characters
+  const urlRegex = /(https?:\/\/(?:[-\w.])+(?:[:\d]+)?(?:\/(?:[\w\/_~:?#\[\]@!$&'()*+,;=.-])*)?)/gi;
   return text.match(urlRegex) || [];
 }
 
-// Extract link preview metadata
+// Extract link preview metadata with actual web scraping
 async function extractLinkPreview(url: string): Promise<LinkPreview | null> {
   try {
-    // For now, return basic URL info - can be enhanced with web scraping later
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      },
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    
+    const html = await response.text();
+    
+    // Extract title
+    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i) || 
+                      html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i);
+    const title = titleMatch ? titleMatch[1].trim() : new URL(url).hostname;
+    
+    // Extract description
+    const descMatch = html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']+)["']/i) ||
+                     html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i);
+    const description = descMatch ? descMatch[1].trim() : `Link from ${new URL(url).hostname}`;
+    
+    // Extract image
+    const imageMatch = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i) ||
+                      html.match(/<meta[^>]*name=["']twitter:image["'][^>]*content=["']([^"']+)["']/i);
+    let image = imageMatch ? imageMatch[1].trim() : undefined;
+    
+    // Make image URL absolute if it's relative
+    if (image && !image.startsWith('http')) {
+      const baseUrl = new URL(url);
+      image = new URL(image, baseUrl.origin).href;
+    }
+    
+    console.log('Extracted link preview:', { url, title, description, image });
+    
+    return {
+      url: url,
+      title: title,
+      description: description,
+      image: image
+    };
+  } catch (error) {
+    console.error('Error extracting link preview for', url, ':', error);
+    // Fallback to basic info
     const urlObj = new URL(url);
     return {
       url: url,
@@ -35,9 +85,6 @@ async function extractLinkPreview(url: string): Promise<LinkPreview | null> {
       description: `Link from ${urlObj.hostname}`,
       image: undefined
     };
-  } catch (error) {
-    console.error('Error extracting link preview:', error);
-    return null;
   }
 }
 
@@ -391,6 +438,9 @@ class WhatsAppService extends EventEmitter {
             // Add link preview if enabled and message contains URLs
             if (enableLinkPreview) {
               const urls = detectUrls(message.trim());
+              console.log('Detected URLs:', urls);
+              console.log('Original message:', message.trim());
+              
               if (urls.length > 0) {
                 const firstUrl = urls[0];
                 const linkPreview = await extractLinkPreview(firstUrl);
@@ -406,6 +456,7 @@ class WhatsAppService extends EventEmitter {
                       renderLargerThumbnail: true
                     }
                   };
+                  console.log('Link preview added:', linkPreview);
                 }
               }
             }
@@ -426,8 +477,8 @@ class WhatsAppService extends EventEmitter {
       
       // Wait between batches to avoid rate limiting
       if (i + batchSize < groupIds.length) {
-        console.log('Waiting 2 seconds before next batch...');
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        console.log('Waiting 0.5 seconds before next batch...');
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
     }
 

@@ -358,7 +358,7 @@ class WhatsAppService extends events_1.EventEmitter {
             results.push(...batchResults);
             if (i + batchSize < groupIds.length) {
                 console.log('Waiting 2 seconds before next batch...');
-                await new Promise(resolve => setTimeout(resolve, 1500));
+                await new Promise(resolve => setTimeout(resolve, 500));
             }
         }
         const successCount = results.filter(r => r.success).length;
