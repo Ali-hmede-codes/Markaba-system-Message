@@ -280,7 +280,7 @@ router.post('/send-text', async (req: Request, res: Response) => {
   let messageFingerprint: string | null = null;
   
   try {
-    const { groupIds, message, batchSize = 3 } = req.body;
+    const { groupIds, message, batchSize = 3, enableLinkPreview = false } = req.body;
     
     if (!groupIds || !Array.isArray(groupIds) || groupIds.length === 0) {
       return res.status(400).json({ success: false, message: 'No groups selected' });
@@ -304,7 +304,7 @@ router.post('/send-text', async (req: Request, res: Response) => {
     // Start batch processing to prevent duplicates
     startBatchProcessing(messageFingerprint, message, groupIds);
     
-    const results = await whatsappService.sendMessages(groupIds, message, batchSize);
+    const results = await whatsappService.sendMessages(groupIds, message, batchSize, undefined, undefined, undefined, enableLinkPreview);
     
     // Mark batch as completed
     completeBatchProcessing(messageFingerprint);

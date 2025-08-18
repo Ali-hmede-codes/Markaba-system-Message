@@ -11,6 +11,36 @@ interface Group {
   participants: number;
 }
 
+interface LinkPreview {
+  url: string;
+  title?: string;
+  description?: string;
+  image?: string;
+}
+
+// URL detection utility function
+function detectUrls(text: string): string[] {
+  const urlRegex = /(https?:\/\/(?:[-\w.])+(?:[:\d]+)?(?:\/(?:[\w\/_.])*(?:\?(?:[\w&=%.])*)?(?:#(?:[\w.])*)?)?)/gi;
+  return text.match(urlRegex) || [];
+}
+
+// Extract link preview metadata
+async function extractLinkPreview(url: string): Promise<LinkPreview | null> {
+  try {
+    // For now, return basic URL info - can be enhanced with web scraping later
+    const urlObj = new URL(url);
+    return {
+      url: url,
+      title: urlObj.hostname,
+      description: `Link from ${urlObj.hostname}`,
+      image: undefined
+    };
+  } catch (error) {
+    console.error('Error extracting link preview:', error);
+    return null;
+  }
+}
+
 
 
 class WhatsAppService extends EventEmitter {
@@ -290,7 +320,7 @@ class WhatsAppService extends EventEmitter {
 
 
 
-  async sendMessages(groupIds: string[], message: string, batchSize: number = 3, mediaBuffer?: Buffer, mediaType?: string, fileName?: string) {
+  async sendMessages(groupIds: string[], message: string, batchSize: number = 3, mediaBuffer?: Buffer, mediaType?: string, fileName?: string, enableLinkPreview: boolean = false) {
     if (!this.socket) {
       throw new Error('WhatsApp socket not initialized');
     }
@@ -357,6 +387,28 @@ class WhatsAppService extends EventEmitter {
           } else {
             // Send text message
             messageContent = { text: message.trim() };
+            
+            // Add link preview if enabled and message contains URLs
+            if (enableLinkPreview) {
+              const urls = detectUrls(message.trim());
+              if (urls.length > 0) {
+                const firstUrl = urls[0];
+                const linkPreview = await extractLinkPreview(firstUrl);
+                
+                if (linkPreview) {
+                  messageContent.contextInfo = {
+                    externalAdReply: {
+                      title: linkPreview.title || 'Link Preview',
+                      body: linkPreview.description || 'Click to open link',
+                      thumbnailUrl: linkPreview.image,
+                      sourceUrl: linkPreview.url,
+                      mediaType: 1,
+                      renderLargerThumbnail: true
+                    }
+                  };
+                }
+              }
+            }
           }
           
           await this.socket!.sendMessage(groupId, messageContent);
