@@ -376,21 +376,15 @@ class WhatsAppService extends EventEmitter {
                 }
                 
                 const urlInfo = await getUrlInfo(message.trim(), {
-                  thumbnailWidth: 192,
-                  fetchOpts: { timeout: 10000 } // Increased timeout for markaba.news
+                  thumbnailWidth: 1024,
+                  fetchOpts: { timeout: 8000 }, // Increased timeout for markaba.news
+                  uploadImage: this.socket?.waUploadToServer, // Pass socket upload function for iOS compatibility
+                  logger: console
                 });
                 
                 if (urlInfo) {
-                  messageContent.contextInfo = {
-                    externalAdReply: {
-                      title: urlInfo.title || 'Link Preview',
-                      body: urlInfo.description || '',
-                      thumbnailUrl: urlInfo.originalThumbnailUrl,
-                      sourceUrl: urlInfo['canonical-url'],
-                      mediaType: 1,
-                      renderLargerThumbnail: true
-                    }
-                  };
+                  // Use proper Baileys link preview format for iOS compatibility
+                  messageContent.linkPreview = urlInfo;
                   console.log(`✓ Link preview generated for ${groupId}${hasMarkabaUrl ? ' (markaba.news auto-enabled)' : ''}`);
                 }
               } catch (error) {
