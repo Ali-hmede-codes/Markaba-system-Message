@@ -467,7 +467,18 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       
+      // Check for markaba.news URLs and show special loading message
+      const markabaRegex = /https:\/\/www\.markaba\.news[^\s]*/gi;
+      const hasMarkabaUrl = markabaRegex.test(message);
+      
       sendBtn.disabled = true;
+      
+      if (hasMarkabaUrl) {
+        showSendStatus('🔍 Markaba.news URL detected - Auto-enabling link preview and preparing enhanced message...', 'info');
+        // Add extra delay for markaba.news URLs to show the special status
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      }
+      
       showSendStatus('Preparing to send message...', '');
       
       const totalBatches = Math.ceil(selectedGroups.length / batchSize);

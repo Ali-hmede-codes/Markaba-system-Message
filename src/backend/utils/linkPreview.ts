@@ -135,3 +135,13 @@ export const containsUrl = (text: string): boolean => {
   const urlRegex = /(https?:\/\/[^\s]+)/gi;
   return urlRegex.test(text);
 };
+
+/**
+ * Detects if a message contains markaba.news URLs specifically
+ * @param text The message text to check
+ * @returns true if markaba.news URLs are found, false otherwise
+ */
+export const containsMarkabaUrl = (text: string): boolean => {
+  const markabaRegex = /https:\/\/www\.markaba\.news[^\s]*/gi;
+  return markabaRegex.test(text);
+};

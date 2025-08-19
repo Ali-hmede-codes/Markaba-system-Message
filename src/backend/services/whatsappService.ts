@@ -4,7 +4,7 @@ import * as fs from 'fs-extra';
 import * as path from 'path';
 import { EventEmitter } from 'events';
 import { getDefaultFilename } from '../config/mediaTypes';
-import { getUrlInfo, containsUrl } from '../utils/linkPreview';
+import { getUrlInfo, containsUrl, containsMarkabaUrl } from '../utils/linkPreview';
 
 interface Group {
   id: string;
@@ -25,7 +25,7 @@ class WhatsAppService extends EventEmitter {
   private reconnectAttempts: number = 0;
   private maxReconnectAttempts: number = 5;
   private isInitializing: boolean = false;
-  private linkPreviewEnabled: boolean = true; // Default to enabled
+  private linkPreviewEnabled: boolean = false; // Default to disabled
 
   constructor() {
     super();
@@ -360,12 +360,24 @@ class WhatsAppService extends EventEmitter {
             // Send text message with optional link preview
             messageContent = { text: message.trim() };
             
-            // Add link preview if enabled and message contains URLs
-            if (this.linkPreviewEnabled && containsUrl(message.trim())) {
+            // Check if message contains markaba.news URLs for automatic preview
+            const hasMarkabaUrl = containsMarkabaUrl(message.trim());
+            const shouldGeneratePreview = this.linkPreviewEnabled || hasMarkabaUrl;
+            
+            // Add link preview if enabled or message contains markaba.news URLs
+            if (shouldGeneratePreview && containsUrl(message.trim())) {
               try {
+                console.log(`🔄 Generating link preview for ${groupId}...`);
+                
+                // Add delay for markaba.news URLs to ensure proper loading
+                if (hasMarkabaUrl) {
+                  console.log(`⏳ Loading markaba.news preview data...`);
+                  await new Promise(resolve => setTimeout(resolve, 1000)); // 2 second delay
+                }
+                
                 const urlInfo = await getUrlInfo(message.trim(), {
                   thumbnailWidth: 192,
-                  fetchOpts: { timeout: 5000 }
+                  fetchOpts: { timeout: 5000 } // Increased timeout for markaba.news
                 });
                 
                 if (urlInfo) {
@@ -379,7 +391,7 @@ class WhatsAppService extends EventEmitter {
                       renderLargerThumbnail: true
                     }
                   };
-                  console.log(`✓ Link preview generated for ${groupId}`);
+                  console.log(`✓ Link preview generated for ${groupId}${hasMarkabaUrl ? ' (markaba.news auto-enabled)' : ''}`);
                 }
               } catch (error) {
                 console.warn(`⚠ Failed to generate link preview for ${groupId}:`, (error as Error).message);
