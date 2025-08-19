@@ -93,8 +93,14 @@ export const getUrlInfo = async (
         originalThumbnailUrl: image
       };
 
-      if (opts.uploadImage && image) {
-        try {
+      try {
+        // Local thumbnail (for Android)
+        if (image) {
+          urlInfo.jpegThumbnail = (await getCompressedJpegThumbnail(image, opts)).buffer;
+        }
+
+        // Uploaded thumbnail (for iOS)
+        if (opts.uploadImage && image) {
           const { imageMessage } = await prepareWAMessageMedia(
             { image: { url: image } },
             {
@@ -103,17 +109,15 @@ export const getUrlInfo = async (
               options: opts.fetchOpts
             }
           );
-          urlInfo.jpegThumbnail = imageMessage?.jpegThumbnail ? Buffer.from(imageMessage.jpegThumbnail) : undefined;
           urlInfo.highQualityThumbnail = imageMessage || undefined;
-        } catch (error: any) {
-          opts.logger?.debug({ err: error.stack, url: previewLink }, 'error in preparing media for link preview');
+
+          // Ensure jpegThumbnail exists as fallback
+          if (!urlInfo.jpegThumbnail && imageMessage?.jpegThumbnail) {
+            urlInfo.jpegThumbnail = Buffer.from(imageMessage.jpegThumbnail);
+          }
         }
-      } else if (image) {
-        try {
-          urlInfo.jpegThumbnail = (await getCompressedJpegThumbnail(image, opts)).buffer;
-        } catch (error: any) {
-          opts.logger?.debug({ err: error.stack, url: previewLink }, 'error in generating thumbnail');
-        }
+      } catch (error: any) {
+        opts.logger?.debug({ err: error.stack, url: previewLink }, 'error in generating thumbnail');
       }
 
       return urlInfo;
