@@ -377,26 +377,18 @@ class WhatsAppService extends EventEmitter {
                 
                 const urlInfo = await getUrlInfo(message.trim(), {
                   thumbnailWidth: 1024,
-                  fetchOpts: { timeout: 8000 }, // Increased timeout for markaba.news
-                  uploadImage: this.socket?.waUploadToServer, // Pass socket upload function for iOS compatibility
-                  logger: console
+                  fetchOpts: { timeout: 10000 }, // Increased timeout for markaba.news
+                  uploadImage: this.socket!.waUploadToServer // Critical for iOS compatibility
                 });
                 
                 if (urlInfo) {
-                  // Use dual format for maximum cross-platform compatibility
-                  messageContent.linkPreview = urlInfo; // iOS compatibility
-                  messageContent.contextInfo = {
-                    externalAdReply: {
-                      title: urlInfo.title || 'Link Preview',
-                      body: urlInfo.description || '',
-                      thumbnailUrl: urlInfo.originalThumbnailUrl,
-                      sourceUrl: urlInfo['canonical-url'],
-                      mediaType: 1,
-                      renderLargerThumbnail: true,
-                      jpegThumbnail: urlInfo.jpegThumbnail // Android compatibility
-                    }
-                  };
-                  console.log(`✓ Link preview generated for ${groupId}${hasMarkabaUrl ? ' (markaba.news auto-enabled)' : ''}`);
+                  // Use official linkPreview approach for cross-platform compatibility
+                  await this.socket!.sendMessage(groupId, {
+                    text: message,
+                    linkPreview: urlInfo
+                  });
+                  console.log(`✓ Link preview sent for ${groupId}${hasMarkabaUrl ? ' (markaba.news auto-enabled)' : ''}`);
+                  return { groupId, success: true }; // Exit early since message is already sent
                 }
               } catch (error) {
                 console.warn(`⚠ Failed to generate link preview for ${groupId}:`, (error as Error).message);
@@ -405,6 +397,7 @@ class WhatsAppService extends EventEmitter {
             }
           }
           
+          // Send the message (only if not already sent with link preview)
           await this.socket!.sendMessage(groupId, messageContent);
           console.log(`✓ ${mediaBuffer ? 'Media m' : 'M'}essage sent to ${groupId}`);
           return { groupId, success: true };
