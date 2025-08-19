@@ -383,8 +383,19 @@ class WhatsAppService extends EventEmitter {
                 });
                 
                 if (urlInfo) {
-                  // Use proper Baileys link preview format for iOS compatibility
-                  messageContent.linkPreview = urlInfo;
+                  // Use dual format for maximum cross-platform compatibility
+                  messageContent.linkPreview = urlInfo; // iOS compatibility
+                  messageContent.contextInfo = {
+                    externalAdReply: {
+                      title: urlInfo.title || 'Link Preview',
+                      body: urlInfo.description || '',
+                      thumbnailUrl: urlInfo.originalThumbnailUrl,
+                      sourceUrl: urlInfo['canonical-url'],
+                      mediaType: 1,
+                      renderLargerThumbnail: true,
+                      jpegThumbnail: urlInfo.jpegThumbnail // Android compatibility
+                    }
+                  };
                   console.log(`✓ Link preview generated for ${groupId}${hasMarkabaUrl ? ' (markaba.news auto-enabled)' : ''}`);
                 }
               } catch (error) {
