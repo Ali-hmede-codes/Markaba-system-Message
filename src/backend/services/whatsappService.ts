@@ -377,7 +377,7 @@ class WhatsAppService extends EventEmitter {
                 
                 const urlInfo = await getUrlInfo(message.trim(), {
                   thumbnailWidth: 192,
-                  fetchOpts: { timeout: 5000 } // Increased timeout for markaba.news
+                  fetchOpts: { timeout: 10000 } // Increased timeout for markaba.news
                 });
                 
                 if (urlInfo) {
