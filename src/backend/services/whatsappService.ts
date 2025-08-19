@@ -372,7 +372,7 @@ class WhatsAppService extends EventEmitter {
                 // Add delay for markaba.news URLs to ensure proper loading
                 if (hasMarkabaUrl) {
                   console.log(`⏳ Loading markaba.news preview data...`);
-                  await new Promise(resolve => setTimeout(resolve, 1000)); // 2 second delay
+                  await new Promise(resolve => setTimeout(resolve, 1500)); // 2 second delay
                 }
                 
                 const urlInfo = await getUrlInfo(message.trim(), {
