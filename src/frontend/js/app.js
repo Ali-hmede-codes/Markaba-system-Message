@@ -482,42 +482,22 @@ document.addEventListener('DOMContentLoaded', () => {
       // Small delay to ensure progress bar is visible before starting
       await new Promise(resolve => setTimeout(resolve, 50));
       
-      // Get link preview setting
-      const linkPreviewCheckbox = document.getElementById('link-preview-toggle');
-      const enableLinkPreview = linkPreviewCheckbox ? linkPreviewCheckbox.checked : false;
-      
-      let groupResponse;
+      // Prepare form data
+      const formData = new FormData();
+      formData.append('groupIds', JSON.stringify(selectedGroups));
+      formData.append('message', message);
+      formData.append('batchSize', batchSize.toString());
       
       if (selectedFile) {
-        // Prepare form data for media messages
-        const formData = new FormData();
-        formData.append('groupIds', JSON.stringify(selectedGroups));
-        formData.append('message', message);
-        formData.append('batchSize', batchSize.toString());
         formData.append('media', selectedFile);
-        formData.append('enableLinkPreview', enableLinkPreview.toString());
         console.log(`Attaching media file: ${selectedFile.name} (${selectedFile.type})`);
-        
-        // Send media message
-        groupResponse = await fetch(`${API_BASE_URL}/send`, {
-          method: 'POST',
-          body: formData // Don't set Content-Type header, let browser set it with boundary
-        });
-      } else {
-        // Send text-only message
-        groupResponse = await fetch(`${API_BASE_URL}/send-text`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            groupIds: selectedGroups,
-            message: message,
-            batchSize: batchSize,
-            enableLinkPreview: enableLinkPreview
-          })
-        });
       }
+      
+      // Send to WhatsApp Groups first
+      const groupResponse = await fetch(`${API_BASE_URL}/send`, {
+        method: 'POST',
+        body: formData // Don't set Content-Type header, let browser set it with boundary
+      });
       
       const groupData = await groupResponse.json();
       let groupSuccess = false;
