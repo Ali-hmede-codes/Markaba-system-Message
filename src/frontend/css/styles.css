@@ -258,6 +258,24 @@ button:disabled {
   background: #1e7e34;
 }
 
+.link-preview-toggle {
+  background: #17a2b8 !important;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.link-preview-toggle:hover {
+  background: #138496 !important;
+}
+
+.link-preview-toggle.disabled {
+  background: #6c757d !important;
+}
+
+.link-preview-toggle.disabled:hover {
+  background: #545b62 !important;
+}
+
 #groups-list {
   max-height: 300px;
   overflow-y: auto;

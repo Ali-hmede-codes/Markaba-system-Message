@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const deselectAllBtn = document.getElementById('deselect-all-btn');
   const saveFavoritesBtn = document.getElementById('save-favorites-btn');
   const loadFavoritesBtn = document.getElementById('load-favorites-btn');
+  const toggleLinkPreviewBtn = document.getElementById('toggle-link-preview-btn');
   
   // Admin elements
   const adminTabContainer = document.getElementById('admin-tab-container');
@@ -34,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
    let groups = [];
    let checkInterval;
    let isSendingMessage = false; // Flag to prevent duplicate sends
+   let linkPreviewEnabled = true; // Link preview state
    
    // Enhanced duplicate prevention system
    let lastMessageFingerprint = null;
@@ -58,6 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
   deselectAllBtn.addEventListener('click', deselectAllGroups);
   saveFavoritesBtn.addEventListener('click', saveFavoriteGroups);
   loadFavoritesBtn.addEventListener('click', loadFavoriteGroups);
+  toggleLinkPreviewBtn.addEventListener('click', toggleLinkPreview);
   
   // Admin event listeners
   if (adminPanelBtn) {
@@ -114,6 +117,9 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log('Initial WhatsApp status:', { isConnected, authState, isAuthenticated });
       
       updateUI();
+      
+      // Load link preview status
+      await loadLinkPreviewStatus();
       
       if (isConnected && authState === 'READY') {
         // Add delay to ensure WhatsApp Web is fully loaded
@@ -515,7 +521,7 @@ document.addEventListener('DOMContentLoaded', () => {
           progressFill.offsetHeight; // Trigger reflow
           
           if (i < totalBatches) {
-            await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5 second delay
+            await new Promise(resolve => setTimeout(resolve, 500)); // 1.5 second delay
           }
         }
       } else if (groupResponse.status === 429) {
@@ -900,4 +906,60 @@ document.addEventListener('DOMContentLoaded', () => {
       window.location.href = '/login';
     }
   }
+
+  // Link Preview Toggle Functions
+  async function toggleLinkPreview() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/link-preview/toggle`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ enabled: !linkPreviewEnabled })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        linkPreviewEnabled = data.linkPreviewEnabled;
+        updateLinkPreviewButton();
+        console.log(data.message);
+      } else {
+        console.error('Failed to toggle link preview:', data.error);
+      }
+    } catch (error) {
+      console.error('Error toggling link preview:', error);
+    }
+  }
+
+  function updateLinkPreviewButton() {
+    if (toggleLinkPreviewBtn) {
+      if (linkPreviewEnabled) {
+        toggleLinkPreviewBtn.textContent = '🔗 معاينة الروابط: تشغيل';
+        toggleLinkPreviewBtn.classList.remove('disabled');
+      } else {
+        toggleLinkPreviewBtn.textContent = '🔗 معاينة الروابط: إيقاف';
+        toggleLinkPreviewBtn.classList.add('disabled');
+      }
+    }
+  }
+
+  async function loadLinkPreviewStatus() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/link-preview/status`, {
+        credentials: 'include'
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        linkPreviewEnabled = data.linkPreviewEnabled;
+        updateLinkPreviewButton();
+      }
+    } catch (error) {
+      console.error('Error loading link preview status:', error);
+    }
+  }
+
 });

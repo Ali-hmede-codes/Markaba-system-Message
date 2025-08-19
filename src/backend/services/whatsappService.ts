@@ -4,6 +4,7 @@ import * as fs from 'fs-extra';
 import * as path from 'path';
 import { EventEmitter } from 'events';
 import { getDefaultFilename } from '../config/mediaTypes';
+import { getUrlInfo, containsUrl } from '../utils/linkPreview';
 
 interface Group {
   id: string;
@@ -24,6 +25,7 @@ class WhatsAppService extends EventEmitter {
   private reconnectAttempts: number = 0;
   private maxReconnectAttempts: number = 5;
   private isInitializing: boolean = false;
+  private linkPreviewEnabled: boolean = true; // Default to enabled
 
   constructor() {
     super();
@@ -355,8 +357,35 @@ class WhatsAppService extends EventEmitter {
               };
             }
           } else {
-            // Send text message
+            // Send text message with optional link preview
             messageContent = { text: message.trim() };
+            
+            // Add link preview if enabled and message contains URLs
+            if (this.linkPreviewEnabled && containsUrl(message.trim())) {
+              try {
+                const urlInfo = await getUrlInfo(message.trim(), {
+                  thumbnailWidth: 192,
+                  fetchOpts: { timeout: 5000 }
+                });
+                
+                if (urlInfo) {
+                  messageContent.contextInfo = {
+                    externalAdReply: {
+                      title: urlInfo.title || 'Link Preview',
+                      body: urlInfo.description || '',
+                      thumbnailUrl: urlInfo.originalThumbnailUrl,
+                      sourceUrl: urlInfo['canonical-url'],
+                      mediaType: 1,
+                      renderLargerThumbnail: true
+                    }
+                  };
+                  console.log(`✓ Link preview generated for ${groupId}`);
+                }
+              } catch (error) {
+                console.warn(`⚠ Failed to generate link preview for ${groupId}:`, (error as Error).message);
+                // Continue sending message without preview
+              }
+            }
           }
           
           await this.socket!.sendMessage(groupId, messageContent);
@@ -374,8 +403,8 @@ class WhatsAppService extends EventEmitter {
       
       // Wait between batches to avoid rate limiting
       if (i + batchSize < groupIds.length) {
-        console.log('Waiting 2 seconds before next batch...');
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        console.log('Waiting 0.5 seconds before next batch...');
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
     }
 
@@ -471,6 +500,16 @@ class WhatsAppService extends EventEmitter {
       console.error('Get favorites error:', err);
       return { success: false, error: (err as Error).message, groups: [] };
     }
+  }
+
+  // Link Preview Management
+  setLinkPreviewEnabled(enabled: boolean): void {
+    this.linkPreviewEnabled = enabled;
+    console.log(`Link preview ${enabled ? 'enabled' : 'disabled'}`);
+  }
+
+  getLinkPreviewEnabled(): boolean {
+    return this.linkPreviewEnabled;
   }
 }
 

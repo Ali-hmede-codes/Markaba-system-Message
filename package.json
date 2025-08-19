@@ -46,6 +46,7 @@
     "express-session": "^1.18.2",
     "fs-extra": "^11.3.0",
     "libsodium-wrappers": "^0.7.15",
+    "link-preview-js": "^3.1.0",
     "multer": "^2.0.2",
     "mysql2": "^3.14.3",
     "node-telegram-bot-api": "^0.66.0",

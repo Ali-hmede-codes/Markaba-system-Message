@@ -382,4 +382,49 @@ router.get('/favorites', async (req: Request, res: Response) => {
   }
 });
 
+// Link Preview Management Routes
+router.post('/link-preview/toggle', async (req: Request, res: Response) => {
+  try {
+    const { enabled } = req.body;
+    
+    if (typeof enabled !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        error: 'enabled parameter must be a boolean'
+      });
+    }
+    
+    whatsappService.setLinkPreviewEnabled(enabled);
+    
+    res.json({
+      success: true,
+      linkPreviewEnabled: enabled,
+      message: `Link preview ${enabled ? 'enabled' : 'disabled'}`
+    });
+  } catch (error) {
+    console.error('Error toggling link preview:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to toggle link preview'
+    });
+  }
+});
+
+router.get('/link-preview/status', (req: Request, res: Response) => {
+  try {
+    const enabled = whatsappService.getLinkPreviewEnabled();
+    
+    res.json({
+      success: true,
+      linkPreviewEnabled: enabled
+    });
+  } catch (error) {
+    console.error('Error getting link preview status:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get link preview status'
+    });
+  }
+});
+
 export default router;
