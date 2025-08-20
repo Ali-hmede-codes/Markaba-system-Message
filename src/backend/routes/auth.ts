@@ -47,12 +47,19 @@ router.post('/login', async (req: Request, res: Response) => {
     );
 
     // Set session cookie
-    res.cookie('session_id', sessionId, {
+    const cookieOptions: any = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: sessionDuration,
       sameSite: 'strict'
-    });
+    };
+
+    // For remember me, set expires date to make cookie persistent
+    if (rememberMe) {
+      cookieOptions.expires = new Date(Date.now() + sessionDuration);
+    }
+
+    res.cookie('session_id', sessionId, cookieOptions);
 
     res.json({
       success: true,
