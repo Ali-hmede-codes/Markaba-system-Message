@@ -156,10 +156,15 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('beforeunload', handlePageUnload);
   
   // Handle form submission for sending messages
-  document.getElementById('message-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    sendMessage();
-  });
+  const messageForm = document.getElementById('message-form');
+  if (messageForm) {
+    messageForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      sendMessage();
+      return false; // Extra prevention
+    });
+  }
   
   // Remove duplicate button click listener to prevent double sending
   // The form submit handler above will handle both Enter key and button clicks
@@ -677,48 +682,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       
-      // Send to Telegram after WhatsApp groups
-      let telegramSuccess = false;
-      let telegramError = null;
-      
-      try {
-        // Prepare Telegram request
-        const telegramFormData = new FormData();
-        telegramFormData.append('message', message);
-        
-        let telegramResponse;
-        
-        if (selectedFile) {
-          // Send media message to Telegram
-          telegramFormData.append('media', selectedFile);
-          telegramResponse = await fetch('/api/telegram/send-media', {
-            method: 'POST',
-            body: telegramFormData
-          });
-        } else {
-          // Send text message to Telegram
-          telegramResponse = await fetch('/api/telegram/send-message', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ message })
-          });
-        }
-        
-        const telegramData = await telegramResponse.json();
-        
-        if (telegramResponse.ok && telegramData.success) {
-          telegramSuccess = true;
-          console.log('Message sent to Telegram successfully');
-        } else {
-          telegramError = telegramData.error || 'Failed to send to Telegram';
-          console.error('Telegram send error:', telegramError);
-        }
-      } catch (error) {
-        telegramError = error.message;
-        console.error('Error sending to Telegram:', error);
-      }
+      // Telegram sending is now handled automatically by the backend WhatsApp route
+      // No need for separate Telegram API calls from frontend
+      const telegramSuccess = groupData.telegramResult?.success || false;
+      const telegramError = groupData.telegramResult?.error || null;
       
       // Complete the progress bar
       progressFill.style.width = '100%';
