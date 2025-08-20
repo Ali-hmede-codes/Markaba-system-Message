@@ -1034,14 +1034,24 @@ document.addEventListener('DOMContentLoaded', () => {
         if (adminTabContainer) {
           adminTabContainer.style.display = 'block';
         }
-        // Show WhatsApp control buttons for admin users
-        if (logoutBtn) logoutBtn.style.display = 'inline-block';
-        if (forceReconnectBtn) forceReconnectBtn.style.display = 'inline-block';
-        if (clearAuthBtn) clearAuthBtn.style.display = 'inline-block';
+        // Show admin panel link in user menu
+        const adminPanelContainer = document.getElementById('admin-panel-container');
+        if (adminPanelContainer) {
+          adminPanelContainer.style.display = 'block';
+        }
+        // Hide WhatsApp control buttons from main dashboard - they should be in admin panel only
+        if (logoutBtn) logoutBtn.style.display = 'none';
+        if (forceReconnectBtn) forceReconnectBtn.style.display = 'none';
+        if (clearAuthBtn) clearAuthBtn.style.display = 'none';
       } else {
         // Hide admin tab for non-admin users
         if (adminTabContainer) {
           adminTabContainer.style.display = 'none';
+        }
+        // Hide admin panel link in user menu
+        const adminPanelContainer = document.getElementById('admin-panel-container');
+        if (adminPanelContainer) {
+          adminPanelContainer.style.display = 'none';
         }
         // Hide WhatsApp control buttons for regular users
         if (logoutBtn) logoutBtn.style.display = 'none';

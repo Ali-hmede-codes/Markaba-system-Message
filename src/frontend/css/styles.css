@@ -519,16 +519,17 @@ button:disabled {
 }
 
 .media-container {
-  width: 150px;
-  height: 150px;
-  border: 2px solid #ddd;
-  border-radius: 8px;
+  width: 20px;
+  height: 20px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
   background-color: #f8f9fa;
   position: relative;
+  cursor: pointer;
 }
 
 #preview-content img {

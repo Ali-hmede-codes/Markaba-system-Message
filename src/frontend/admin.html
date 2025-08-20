@@ -24,6 +24,7 @@
             <div class="admin-tabs">
                 <button class="tab-btn active" data-tab="users">User Management</button>
                 <button class="tab-btn" data-tab="add-user">Add User</button>
+                <button class="tab-btn" data-tab="whatsapp">WhatsApp Control</button>
                 <button class="tab-btn" data-tab="groups">المجموعات</button>
                 <button class="tab-btn" data-tab="messages">الرسائل</button>
             </div>
@@ -105,6 +106,48 @@
                         <button type="reset" class="btn btn-secondary">Clear Form</button>
                     </div>
                 </form>
+            </div>
+
+            <!-- WhatsApp Control Tab -->
+            <div id="whatsapp-tab" class="tab-content">
+                <div class="section-header">
+                    <h2>WhatsApp Control Panel</h2>
+                    <p class="section-description">Manage WhatsApp connection and authentication (Admin Only)</p>
+                </div>
+                
+                <div class="whatsapp-controls">
+                    <div class="control-section">
+                        <h3>Connection Management</h3>
+                        <div class="control-buttons">
+                            <button class="btn btn-warning" id="admin-whatsapp-logout">
+                                <span class="btn-icon">🚪</span>
+                                Logout from WhatsApp
+                            </button>
+                            <button class="btn btn-primary" id="admin-force-reconnect">
+                                <span class="btn-icon">🔄</span>
+                                Force Reconnect
+                            </button>
+                            <button class="btn btn-danger" id="admin-clear-auth">
+                                <span class="btn-icon">🗑️</span>
+                                Clear Authentication Data
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="control-section">
+                        <h3>Connection Status</h3>
+                        <div class="status-info">
+                            <div class="status-item">
+                                <span class="status-label">WhatsApp Status:</span>
+                                <span class="status-value" id="admin-whatsapp-status">Checking...</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-label">Authentication:</span>
+                                <span class="status-value" id="admin-auth-status">Checking...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Groups Management Tab -->

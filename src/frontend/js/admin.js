@@ -96,6 +96,21 @@ document.addEventListener('DOMContentLoaded', () => {
         editUserForm.addEventListener('submit', handleEditUser);
         changePasswordForm.addEventListener('submit', handleChangePassword);
         
+        // WhatsApp Control buttons
+        const adminWhatsAppLogoutBtn = document.getElementById('admin-whatsapp-logout');
+        const adminForceReconnectBtn = document.getElementById('admin-force-reconnect');
+        const adminClearAuthBtn = document.getElementById('admin-clear-auth');
+        
+        if (adminWhatsAppLogoutBtn) {
+            adminWhatsAppLogoutBtn.addEventListener('click', handleWhatsAppLogout);
+        }
+        if (adminForceReconnectBtn) {
+            adminForceReconnectBtn.addEventListener('click', handleForceReconnect);
+        }
+        if (adminClearAuthBtn) {
+            adminClearAuthBtn.addEventListener('click', handleClearAuth);
+        }
+        
         // Modal close buttons
         document.querySelectorAll('.close').forEach(closeBtn => {
             closeBtn.addEventListener('click', (e) => {
@@ -534,4 +549,154 @@ document.addEventListener('DOMContentLoaded', () => {
             adminMessage.style.display = 'none';
         }, 5000);
     }
+    
+    // WhatsApp Control Functions
+    async function handleWhatsAppLogout() {
+        if (!confirm('Are you sure you want to logout from WhatsApp? This will disconnect the WhatsApp session.')) {
+            return;
+        }
+        
+        try {
+            const btn = document.getElementById('admin-whatsapp-logout');
+            btn.disabled = true;
+            btn.textContent = 'Logging out...';
+            
+            const response = await fetch('/api/whatsapp/logout', {
+                method: 'POST'
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showMessage('WhatsApp logged out successfully', 'success');
+                updateWhatsAppStatus();
+            } else {
+                showMessage(`Logout error: ${data.message}`, 'error');
+            }
+        } catch (error) {
+            console.error('Error logging out from WhatsApp:', error);
+            showMessage(`Logout error: ${error.message}`, 'error');
+        } finally {
+            const btn = document.getElementById('admin-whatsapp-logout');
+            btn.disabled = false;
+            btn.innerHTML = '<span class="btn-icon">🚪</span> Logout from WhatsApp';
+        }
+    }
+    
+    async function handleForceReconnect() {
+        if (!confirm('Are you sure you want to force reconnect WhatsApp? This will restart the connection.')) {
+            return;
+        }
+        
+        try {
+            const btn = document.getElementById('admin-force-reconnect');
+            btn.disabled = true;
+            btn.textContent = 'Reconnecting...';
+            
+            const response = await fetch('/api/whatsapp/auth/reconnect', {
+                method: 'POST'
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showMessage('Reconnection initiated successfully', 'success');
+                updateWhatsAppStatus();
+            } else {
+                showMessage(`Reconnection error: ${data.message}`, 'error');
+            }
+        } catch (error) {
+            console.error('Error force reconnecting:', error);
+            showMessage(`Reconnection error: ${error.message}`, 'error');
+        } finally {
+            const btn = document.getElementById('admin-force-reconnect');
+            btn.disabled = false;
+            btn.innerHTML = '<span class="btn-icon">🔄</span> Force Reconnect';
+        }
+    }
+    
+    async function handleClearAuth() {
+        if (!confirm('Are you sure you want to clear all WhatsApp authentication data? This will require re-scanning the QR code.')) {
+            return;
+        }
+        
+        try {
+            const btn = document.getElementById('admin-clear-auth');
+            btn.disabled = true;
+            btn.textContent = 'Clearing...';
+            
+            const response = await fetch('/api/whatsapp/auth/clear', {
+                method: 'POST'
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showMessage('Authentication data cleared successfully', 'success');
+                updateWhatsAppStatus();
+            } else {
+                showMessage(`Clear auth error: ${data.message}`, 'error');
+            }
+        } catch (error) {
+            console.error('Error clearing auth data:', error);
+            showMessage(`Clear auth error: ${error.message}`, 'error');
+        } finally {
+            const btn = document.getElementById('admin-clear-auth');
+            btn.disabled = false;
+            btn.innerHTML = '<span class="btn-icon">🗑️</span> Clear Authentication Data';
+        }
+    }
+    
+    async function updateWhatsAppStatus() {
+        try {
+            const response = await fetch('/api/whatsapp/status');
+            const data = await response.json();
+            
+            const statusElement = document.getElementById('admin-whatsapp-status');
+            const authElement = document.getElementById('admin-auth-status');
+            
+            if (statusElement) {
+                if (data.success) {
+                    statusElement.textContent = data.isConnected ? 'Connected' : 'Disconnected';
+                    statusElement.className = `status-value ${data.isConnected ? '' : 'disconnected'}`;
+                } else {
+                    statusElement.textContent = 'Error';
+                    statusElement.className = 'status-value disconnected';
+                }
+            }
+            
+            if (authElement) {
+                if (data.success) {
+                    authElement.textContent = data.isAuthenticated ? 'Authenticated' : 'Not Authenticated';
+                    authElement.className = `status-value ${data.isAuthenticated ? '' : 'disconnected'}`;
+                } else {
+                    authElement.textContent = 'Error';
+                    authElement.className = 'status-value disconnected';
+                }
+            }
+        } catch (error) {
+            console.error('Error updating WhatsApp status:', error);
+            const statusElement = document.getElementById('admin-whatsapp-status');
+            const authElement = document.getElementById('admin-auth-status');
+            
+            if (statusElement) {
+                statusElement.textContent = 'Error';
+                statusElement.className = 'status-value disconnected';
+            }
+            if (authElement) {
+                authElement.textContent = 'Error';
+                authElement.className = 'status-value disconnected';
+            }
+        }
+    }
+    
+    // Update WhatsApp status when WhatsApp tab is opened
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    tabBtns.forEach(btn => {
+        if (btn.getAttribute('data-tab') === 'whatsapp') {
+            btn.addEventListener('click', () => {
+                setTimeout(updateWhatsAppStatus, 100);
+            });
+        }
+    });
 });
