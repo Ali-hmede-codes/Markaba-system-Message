@@ -11,16 +11,18 @@
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/login.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <div class="login-container">
-        <div class="login-card">
+        <div class="particles"></div>
+        <div class="login-box">
             <div class="login-header">
                 <div class="logo-section">
-                    <div class="logo-icon">📰</div>
-                    <h1>مركبا - المنصة الاخبارية</h1>
+                    <div class="logo-icon" id="systemLogo">💬</div>
+                    <h1 id="systemName">CHATRIX</h1>
                 </div>
-                <p>يرجى تسجيل الدخول للمتابعة</p>
+                <p>تسجيل الدخول إلى لوحة التحكم</p>
             </div>
             
             <form id="loginForm" class="login-form">
@@ -44,8 +46,8 @@
                 
                 <div class="form-group">
                     <button type="submit" id="loginBtn" class="login-btn">
-                        <span class="btn-text">🔐 تسجيل الدخول</span>
-                        <span class="btn-loading" style="display: none;">جاري تسجيل الدخول...</span>
+                        <span class="btn-text"><i class="fas fa-lock"></i> تسجيل الدخول</span>
+                        <span class="btn-loading" style="display: none;"><i class="fas fa-spinner fa-spin"></i> جاري تسجيل الدخول...</span>
                     </button>
                 </div>
             </form>
@@ -58,6 +60,93 @@
         </div>
     </div>
     
-    <script src="js/login.js"></script>
+    <script>
+    // Load global configuration
+     async function loadGlobalConfig() {
+       try {
+         const response = await fetch('/config/global.json');
+         const config = await response.json();
+         
+         // Update page title
+         document.title = `تسجيل الدخول - ${config.systemName}`;
+         
+         // Update system name
+         document.getElementById('systemName').textContent = config.systemName;
+         
+         // Update logo based on type
+         const logoElement = document.getElementById('systemLogo');
+         if (config.logo.type === 'image') {
+           logoElement.innerHTML = `<img src="${config.logo.src}" alt="${config.logo.alt}" width="${config.logo.width}" height="${config.logo.height}" style="display: block; margin: 0 auto;">`;
+         } else {
+           logoElement.textContent = config.logo.icon;
+         }
+         
+         return config;
+       } catch (error) {
+         console.error('Failed to load global config:', error);
+         return null;
+       }
+     }
+
+    // Login form functionality
+    document.addEventListener('DOMContentLoaded', async function() {
+      // Load global configuration first
+      await loadGlobalConfig();
+      
+      const loginForm = document.getElementById('loginForm');
+      const loginBtn = document.getElementById('loginBtn');
+      const btnText = loginBtn.querySelector('.btn-text');
+      const btnLoading = loginBtn.querySelector('.btn-loading');
+
+      loginForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Show loading state
+        loginBtn.disabled = true;
+        btnText.style.display = 'none';
+        btnLoading.style.display = 'inline-block';
+        
+        const formData = new FormData(loginForm);
+        const loginData = {
+          username: formData.get('username'),
+          password: formData.get('password')
+        };
+        
+        try {
+          const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(loginData)
+          });
+          
+          const result = await response.json();
+          
+          if (response.ok) {
+            // Store token and redirect
+            localStorage.setItem('authToken', result.token);
+            window.location.href = '/admin.html';
+          } else {
+            const messageDiv = document.getElementById('loginMessage');
+            messageDiv.textContent = result.message || 'فشل في تسجيل الدخول';
+            messageDiv.className = 'message error';
+            messageDiv.style.display = 'block';
+          }
+        } catch (error) {
+          console.error('Login error:', error);
+          const messageDiv = document.getElementById('loginMessage');
+          messageDiv.textContent = 'حدث خطأ في الاتصال';
+          messageDiv.className = 'message error';
+          messageDiv.style.display = 'block';
+        } finally {
+          // Reset button state
+          loginBtn.disabled = false;
+          btnText.style.display = 'inline-block';
+          btnLoading.style.display = 'none';
+        }
+      });
+    });
+    </script>
 </body>
 </html>

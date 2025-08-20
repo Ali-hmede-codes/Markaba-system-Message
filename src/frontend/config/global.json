@@ -1,0 +1,14 @@
+{
+  "systemName": "CHATRIX",
+  "logo": {
+    "type": "image",
+    "src": "/assets/logo.png",
+    "alt": "CHATRIX Logo",
+    "width": "48",
+    "height": "48"
+  },
+  "branding": {
+    "primaryColor": "#3b82f6",
+    "secondaryColor": "#1e40af"
+  }
+}
