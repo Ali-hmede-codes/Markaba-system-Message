@@ -518,16 +518,22 @@ document.addEventListener('DOMContentLoaded', () => {
       if (previewContent) previewContent.innerHTML = '';
       
       if (fileType.startsWith('image/')) {
+        const container = document.createElement('div');
+        container.className = 'media-container';
         const img = document.createElement('img');
         img.src = URL.createObjectURL(file);
         img.onload = () => URL.revokeObjectURL(img.src);
-        if (previewContent) previewContent.appendChild(img);
+        container.appendChild(img);
+        if (previewContent) previewContent.appendChild(container);
       } else if (fileType.startsWith('video/')) {
+        const container = document.createElement('div');
+        container.className = 'media-container';
         const video = document.createElement('video');
         video.src = URL.createObjectURL(file);
         video.controls = true;
         video.onload = () => URL.revokeObjectURL(video.src);
-        if (previewContent) previewContent.appendChild(video);
+        container.appendChild(video);
+        if (previewContent) previewContent.appendChild(container);
       } else {
         const fileInfo = document.createElement('div');
         fileInfo.className = 'file-info';
