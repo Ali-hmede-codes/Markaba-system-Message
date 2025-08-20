@@ -46,6 +46,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function setupEventListeners() {
+        // Tab switching
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabName = btn.getAttribute('data-tab');
+                
+                // Remove active class from all tabs and contents
+                tabBtns.forEach(b => b.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding content
+                btn.classList.add('active');
+                const targetContent = document.getElementById(`${tabName}-tab`);
+                if (targetContent) {
+                    targetContent.classList.add('active');
+                }
+                
+                // Load data for specific tabs
+                if (tabName === 'groups') {
+                    loadGroups();
+                } else if (tabName === 'messages') {
+                    setupMessageForm();
+                }
+            });
+        });
+        
         // Navigation
         backToMainBtn.addEventListener('click', () => {
             window.location.href = '/dashboard';
@@ -376,6 +404,127 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
+    // Groups management functions
+    async function loadGroups() {
+        try {
+            const response = await fetch('/api/whatsapp/groups');
+            const data = await response.json();
+            
+            const groupsList = document.getElementById('groups-list');
+            
+            if (data.success && data.groups) {
+                groupsList.innerHTML = data.groups.map(group => `
+                    <div class="group-item">
+                        <input type="checkbox" id="group-${group.id}" value="${group.id}" class="group-checkbox">
+                        <label for="group-${group.id}" class="group-label">
+                            <div class="group-info">
+                                <span class="group-name">${group.name}</span>
+                                <span class="group-participants">${group.participants || 0} أعضاء</span>
+                            </div>
+                        </label>
+                    </div>
+                `).join('');
+                
+                setupGroupsEventListeners();
+            } else {
+                groupsList.innerHTML = '<p class="no-groups">لا توجد مجموعات متاحة. تأكد من اتصال واتساب.</p>';
+            }
+        } catch (error) {
+            console.error('Error loading groups:', error);
+            document.getElementById('groups-list').innerHTML = '<p class="error">خطأ في تحميل المجموعات</p>';
+        }
+    }
+    
+    function setupGroupsEventListeners() {
+        // Select/Deselect all buttons
+        document.getElementById('select-all-btn')?.addEventListener('click', () => {
+            document.querySelectorAll('.group-checkbox').forEach(cb => cb.checked = true);
+        });
+        
+        document.getElementById('deselect-all-btn')?.addEventListener('click', () => {
+            document.querySelectorAll('.group-checkbox').forEach(cb => cb.checked = false);
+        });
+        
+        // Refresh groups
+        document.getElementById('refresh-groups-btn')?.addEventListener('click', loadGroups);
+    }
+    
+    // Message form setup
+    function setupMessageForm() {
+        const messageForm = document.getElementById('message-form');
+        
+        if (messageForm && !messageForm.hasAttribute('data-setup')) {
+            messageForm.setAttribute('data-setup', 'true');
+            
+            messageForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await sendMessage();
+            });
+        }
+    }
+    
+    async function sendMessage() {
+        const messageInput = document.getElementById('message-input');
+        const mediaInput = document.getElementById('media-input');
+        const batchSizeInput = document.getElementById('batch-size');
+        const delayInput = document.getElementById('delay-input');
+        const linkPreviewToggle = document.getElementById('link-preview-toggle');
+        
+        const selectedGroups = Array.from(document.querySelectorAll('.group-checkbox:checked'))
+            .map(cb => cb.value);
+        
+        if (selectedGroups.length === 0) {
+            showMessage('يرجى تحديد مجموعة واحدة على الأقل', 'error');
+            return;
+        }
+        
+        if (!messageInput.value.trim()) {
+            showMessage('يرجى كتابة نص الرسالة', 'error');
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('message', messageInput.value);
+        formData.append('groups', JSON.stringify(selectedGroups));
+        formData.append('batchSize', batchSizeInput.value || '5');
+        formData.append('delay', delayInput.value || '2');
+        formData.append('linkPreview', linkPreviewToggle.value === 'true');
+        
+        if (mediaInput.files[0]) {
+            formData.append('media', mediaInput.files[0]);
+        }
+        
+        try {
+            showProgress(true);
+            
+            const response = await fetch('/api/whatsapp/send', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showMessage('تم إرسال الرسالة بنجاح', 'success');
+                messageForm.reset();
+            } else {
+                showMessage(data.message || 'خطأ في إرسال الرسالة', 'error');
+            }
+        } catch (error) {
+            console.error('Error sending message:', error);
+            showMessage('خطأ في إرسال الرسالة', 'error');
+        } finally {
+            showProgress(false);
+        }
+    }
+    
+    function showProgress(show) {
+        const progressContainer = document.getElementById('progress-container');
+        if (progressContainer) {
+            progressContainer.style.display = show ? 'block' : 'none';
+        }
+    }
+
     function showMessage(message, type) {
         adminMessage.textContent = message;
         adminMessage.className = `message ${type}`;

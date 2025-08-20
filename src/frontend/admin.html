@@ -24,6 +24,8 @@
             <div class="admin-tabs">
                 <button class="tab-btn active" data-tab="users">User Management</button>
                 <button class="tab-btn" data-tab="add-user">Add User</button>
+                <button class="tab-btn" data-tab="groups">المجموعات</button>
+                <button class="tab-btn" data-tab="messages">الرسائل</button>
             </div>
 
             <!-- Users Management Tab -->
@@ -103,6 +105,105 @@
                         <button type="reset" class="btn btn-secondary">Clear Form</button>
                     </div>
                 </form>
+            </div>
+
+            <!-- Groups Management Tab -->
+            <div id="groups-tab" class="tab-content">
+                <div class="section-header">
+                    <h2>إدارة المجموعات</h2>
+                    <div class="section-actions">
+                        <button class="btn btn-secondary" id="refresh-groups-btn">
+                            <span class="btn-icon">🔄</span>
+                            تحديث
+                        </button>
+                        <button class="btn btn-secondary" id="save-favorites-btn">
+                            <span class="btn-icon">⭐</span>
+                            حفظ المفضلة
+                        </button>
+                        <button class="btn btn-secondary" id="load-favorites-btn">
+                            <span class="btn-icon">📂</span>
+                            تحميل المفضلة
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="groups-controls">
+                    <div class="control-group">
+                        <button class="btn btn-secondary" id="select-all-btn">تحديد الكل</button>
+                        <button class="btn btn-secondary" id="deselect-all-btn">إلغاء التحديد</button>
+                    </div>
+                    <div class="control-group">
+                        <button class="btn btn-secondary toggle-btn" id="toggle-link-preview-btn">
+                            <span class="btn-icon">🔗</span>
+                            <span class="toggle-text">معاينة الروابط: تشغيل</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="groups-list" id="groups-list">
+                    <!-- Groups will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Messages Management Tab -->
+            <div id="messages-tab" class="tab-content">
+                <div class="section-header">
+                    <h2>إرسال الرسائل</h2>
+                </div>
+                
+                <form id="message-form" class="admin-form" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="message-input">نص الرسالة</label>
+                        <textarea id="message-input" name="message" rows="6" placeholder="اكتب رسالتك هنا..." required></textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="media-input">إرفاق ملف (اختياري)</label>
+                            <input type="file" id="media-input" name="media" accept="image/*,video/*,audio/*,.pdf,.doc,.docx">
+                        </div>
+                        <div class="form-group">
+                            <label for="batch-size">حجم الدفعة</label>
+                            <input type="number" id="batch-size" name="batchSize" value="5" min="1" max="20">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="delay-input">التأخير بين الرسائل (ثانية)</label>
+                            <input type="number" id="delay-input" name="delay" value="2" min="1" max="10">
+                        </div>
+                        <div class="form-group">
+                            <label for="link-preview-toggle">معاينة الروابط</label>
+                            <select id="link-preview-toggle" name="linkPreview">
+                                <option value="true">تشغيل</option>
+                                <option value="false">إيقاف</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" id="send-message-btn">
+                            <span class="btn-icon">📤</span>
+                            إرسال الرسالة
+                        </button>
+                        <button type="reset" class="btn btn-secondary">مسح النموذج</button>
+                    </div>
+                </form>
+                
+                <div id="progress-container" style="display: none;">
+                    <div class="progress-header">
+                        <h3>حالة الإرسال</h3>
+                        <div class="progress-stats">
+                            <span id="progress-text">0 / 0</span>
+                            <span id="progress-percentage">0%</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <div id="progress-log"></div>
+                </div>
             </div>
         </div>
     </div>

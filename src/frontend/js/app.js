@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const logoutBtn = document.getElementById('logout-btn');
   const forceReconnectBtn = document.getElementById('force-reconnect-btn');
   const clearAuthBtn = document.getElementById('clear-auth-btn');
-  const statusMessage = document.getElementById('status-message');
+  // Status message element removed - using nav status indicator instead
   const qrcodeContainer = document.getElementById('qrcode-container');
   const qrcodeElement = document.getElementById('qrcode');
   const groupsContainer = document.getElementById('groups-container');
@@ -27,6 +27,80 @@ document.addEventListener('DOMContentLoaded', () => {
   // API Base URLs
   const API_BASE_URL = '/api/whatsapp';
   const AUTH_API_BASE_URL = '/api/auth';
+
+  // Toast Notification System
+  let toastCounter = 0;
+
+  function showToast(message, type = 'info', duration = 3000) {
+    const toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+      console.error('Toast container not found');
+      return;
+    }
+
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.id = `toast-${++toastCounter}`;
+
+    // Get icon based on type
+    const icons = {
+      success: '✓',
+      error: '✕',
+      warning: '⚠',
+      info: 'ℹ'
+    };
+
+    toast.innerHTML = `
+      <span class="toast-icon">${icons[type] || icons.info}</span>
+      <span class="toast-content">${message}</span>
+      <button class="toast-close" onclick="hideToast('${toast.id}')">&times;</button>
+    `;
+
+    // Add to container
+    toastContainer.appendChild(toast);
+
+    // Show toast with animation
+    setTimeout(() => {
+      toast.classList.add('show');
+    }, 10);
+
+    // Auto-hide after duration
+    if (duration > 0) {
+      setTimeout(() => {
+        hideToast(toast.id);
+      }, duration);
+    }
+
+    return toast.id;
+  }
+
+  function hideToast(toastId) {
+    const toast = document.getElementById(toastId);
+    if (!toast) return;
+
+    toast.classList.remove('show');
+    toast.classList.add('hide');
+
+    // Remove from DOM after animation
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast);
+      }
+    }, 300);
+  }
+
+  function hideAllToasts() {
+    const toasts = document.querySelectorAll('.toast');
+    toasts.forEach(toast => {
+      hideToast(toast.id);
+    });
+  }
+
+  // Make toast functions globally available
+  window.showToast = showToast;
+  window.hideToast = hideToast;
+  window.hideAllToasts = hideAllToasts;
 
   // State
   let isConnected = false;
@@ -73,11 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
     logoutMainBtn.addEventListener('click', handleMainLogout);
   }
   
-  // Add refresh groups button listener
-  document.getElementById('refresh-groups-btn').addEventListener('click', () => {
-    console.log('Manual refresh groups clicked');
-    fetchGroups(true);
-  });
+  // Refresh groups button removed - groups will auto-refresh when needed
   
   // Add page visibility and focus event listeners for duplicate prevention
   document.addEventListener('visibilitychange', handlePageVisibilityChange);
@@ -129,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (error) {
       console.error('Error checking status:', error);
-      statusMessage.textContent = 'Error connecting to server';
+      showToast('Error connecting to server', 'error');
     }
   }
 
@@ -138,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function initializeWhatsApp() {
     try {
       connectBtn.disabled = true;
-      statusMessage.textContent = 'Initializing WhatsApp client...';
+      console.log('Initializing WhatsApp client...');
       
       const response = await fetch(`${API_BASE_URL}/init`, {
         method: 'POST',
@@ -152,7 +222,8 @@ document.addEventListener('DOMContentLoaded', () => {
       
       if (data.success) {
         authState = data.state || 'CONNECTING';
-        statusMessage.textContent = `Initialization started (${authState})`;
+        console.log(`Initialization started (${authState})`);
+        showToast('WhatsApp client initialized successfully', 'success');
         
         if (authState === 'QR_REQUIRED') {
           qrcodeContainer.style.display = 'block';
@@ -164,7 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (error) {
       console.error('Error initializing WhatsApp:', error);
-      statusMessage.textContent = `Error: ${error.message}`;
+      showToast(`Initialization error: ${error.message}`, 'error');
       connectBtn.disabled = false;
     }
   }
@@ -194,9 +265,22 @@ document.addEventListener('DOMContentLoaded', () => {
             <p>Scan this QR code with your WhatsApp mobile app</p>
             <p>Auth State: ${authState}</p>
           `;
+          
+          // Add qr-loaded class to hide placeholder
+          const qrContainer = document.getElementById('qr-container');
+          if (qrContainer) {
+            qrContainer.classList.add('qr-loaded');
+          }
+          
           qrcodeContainer.style.display = 'block';
         } else if (authState !== 'QR_REQUIRED') {
           qrcodeContainer.style.display = 'none';
+          
+          // Remove qr-loaded class to show placeholder again
+          const qrContainer = document.getElementById('qr-container');
+          if (qrContainer) {
+            qrContainer.classList.remove('qr-loaded');
+          }
         }
         
         // Update UI if connection or auth state changed
@@ -237,37 +321,60 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update status message based on auth state
     let statusText = '';
     let statusClass = '';
+    let navStatusText = '';
+    let navStatusClass = '';
     
     switch (authState) {
       case 'CONNECTING':
         statusText = 'Connecting to WhatsApp...';
         statusClass = 'connecting';
+        navStatusText = 'جاري الاتصال...';
+        navStatusClass = 'offline';
         break;
       case 'QR_REQUIRED':
         statusText = 'Scan QR code to authenticate';
         statusClass = 'qr-required';
+        navStatusText = 'في انتظار المسح';
+        navStatusClass = 'offline';
         break;
       case 'AUTHENTICATED':
         statusText = 'Authenticated - Preparing WhatsApp Web...';
         statusClass = 'authenticated';
+        navStatusText = 'جاري التحضير...';
+        navStatusClass = 'offline';
         break;
       case 'READY':
         statusText = 'Connected to WhatsApp - Ready to send messages';
         statusClass = 'connected';
+        navStatusText = 'متصل';
+        navStatusClass = 'online';
         break;
       case 'DISCONNECTED':
       default:
         statusText = 'Not connected to WhatsApp';
         statusClass = 'disconnected';
+        navStatusText = 'غير متصل';
+        navStatusClass = 'offline';
         break;
     }
     
-    statusMessage.textContent = statusText;
-    statusMessage.className = statusClass;
+    // Status message now handled by navigation indicator only
+    
+    // Update navigation status indicator
+    const navStatusDot = document.getElementById('nav-status-dot');
+    const navStatusTextEl = document.getElementById('nav-status-text');
+    
+    if (navStatusDot && navStatusTextEl) {
+      navStatusDot.className = `status-dot ${navStatusClass}`;
+      navStatusTextEl.textContent = navStatusText;
+    }
+    
+    // Show/hide connection controls section
+    const connectionControls = document.querySelector('.connection-controls');
     
     // Show/hide UI elements based on connection state and user role
      if (isConnected && authState === 'READY') {
-       connectBtn.style.display = 'none';
+       if (connectionControls) connectionControls.style.display = 'none';
        groupsContainer.style.display = 'block';
        messageContainer.style.display = 'block';
        
@@ -279,7 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
        // Check user role before showing WhatsApp control buttons
        checkUserRole();
      } else {
-       connectBtn.style.display = 'inline-block';
+       if (connectionControls) connectionControls.style.display = 'block';
        connectBtn.disabled = (authState === 'CONNECTING' || authState === 'AUTHENTICATED');
        groupsContainer.style.display = 'none';
        messageContainer.style.display = 'none';
@@ -314,6 +421,8 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Groups loaded:', groups.length);
         renderGroups();
         
+        // Auto-load favorite groups if available
+        await autoLoadFavorites();
 
       } else {
         console.error('Groups fetch failed:', data.error);
@@ -339,11 +448,32 @@ document.addEventListener('DOMContentLoaded', () => {
       groupsList.appendChild(div);
     });
 
-    // Add refresh button
+    // Add refresh button outside groups-list
+    addRefreshButton();
+  }
+
+  function addRefreshButton() {
+    // Remove existing refresh button if any
+    const existingBtn = document.getElementById('refresh-groups-btn');
+    if (existingBtn) {
+      existingBtn.remove();
+    }
+
+    // Create new refresh button
     const refreshBtn = document.createElement('button');
-    refreshBtn.textContent = 'Refresh Groups';
+    refreshBtn.id = 'refresh-groups-btn';
+    refreshBtn.className = 'btn btn-outline';
+    refreshBtn.innerHTML = `
+      <span class="btn-icon">🔄</span>
+      تحديث المجموعات
+    `;
     refreshBtn.onclick = () => fetchGroups(true);
-    groupsList.appendChild(refreshBtn);
+
+    // Add to section-actions
+    const sectionActions = document.querySelector('.groups-section .section-actions');
+    if (sectionActions) {
+      sectionActions.appendChild(refreshBtn);
+    }
   }
 
 
@@ -676,7 +806,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function logout() {
     try {
       logoutBtn.disabled = true;
-      statusMessage.textContent = 'Logging out...';
+      console.log('Logging out...');
       
       const response = await fetch(`${API_BASE_URL}/logout`, {
         method: 'POST'
@@ -693,14 +823,15 @@ document.addEventListener('DOMContentLoaded', () => {
         groups = [];
         
         updateUI();
-        statusMessage.textContent = data.message || 'Logged out successfully';
+        console.log(data.message || 'Logged out successfully');
+        showToast('WhatsApp logged out successfully', 'success');
       } else {
-        statusMessage.textContent = `Error: ${data.message}`;
+        showToast(`Logout error: ${data.message}`, 'error');
         logoutBtn.disabled = false;
       }
     } catch (error) {
       console.error('Error logging out:', error);
-      statusMessage.textContent = `Error: ${error.message}`;
+      showToast(`Logout error: ${error.message}`, 'error');
       logoutBtn.disabled = false;
     }
   }
@@ -708,7 +839,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function forceReconnect() {
     try {
       forceReconnectBtn.disabled = true;
-      statusMessage.textContent = 'Force reconnecting...';
+      console.log('Force reconnecting...');
       
       const response = await fetch(`${API_BASE_URL}/auth/reconnect`, {
         method: 'POST'
@@ -717,7 +848,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await response.json();
       
       if (data.success) {
-        statusMessage.textContent = 'Reconnection initiated';
+        console.log('Reconnection initiated');
+        showToast('Reconnection initiated successfully', 'success');
         authState = 'CONNECTING';
         updateUI();
         startStatusCheck();
@@ -726,7 +858,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (error) {
       console.error('Error force reconnecting:', error);
-      statusMessage.textContent = `Reconnection error: ${error.message}`;
+      showToast(`Reconnection error: ${error.message}`, 'error');
     } finally {
       forceReconnectBtn.disabled = false;
     }
@@ -739,7 +871,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     try {
       clearAuthBtn.disabled = true;
-      statusMessage.textContent = 'Clearing authentication data...';
+      console.log('Clearing authentication data...');
       
       const response = await fetch(`${API_BASE_URL}/auth/clear`, {
         method: 'POST'
@@ -756,13 +888,14 @@ document.addEventListener('DOMContentLoaded', () => {
         groups = [];
         
         updateUI();
-        statusMessage.textContent = 'Authentication data cleared. You can now connect again.';
+        console.log('Authentication data cleared. You can now connect again.');
+        showToast('Authentication data cleared successfully', 'success');
       } else {
         throw new Error(data.message);
       }
     } catch (error) {
       console.error('Error clearing auth data:', error);
-      statusMessage.textContent = `Clear auth error: ${error.message}`;
+      showToast(`Clear auth error: ${error.message}`, 'error');
     } finally {
       clearAuthBtn.disabled = false;
     }
@@ -791,7 +924,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }));
       
       if (selectedGroups.length === 0) {
-        showSendStatus('Please select at least one group to save as favorite', 'error');
+        showToast('Please select at least one group to save as favorite', 'warning');
         return;
       }
       
@@ -810,13 +943,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await response.json();
       
       if (data.success) {
-        showSendStatus('Favorite groups saved successfully!', 'success');
+        showToast('Favorite groups saved successfully!', 'success');
       } else {
-        showSendStatus(`Error: ${data.message}`, 'error');
+        showToast(`Error: ${data.message}`, 'error');
       }
     } catch (error) {
       console.error('Error saving favorite groups:', error);
-      showSendStatus(`Error: ${error.message}`, 'error');
+      showToast(`Error: ${error.message}`, 'error');
     } finally {
       saveFavoritesBtn.disabled = false;
     }
@@ -843,17 +976,44 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         });
         
-        showSendStatus('Favorite groups loaded!', 'success');
+        showToast('Favorite groups loaded successfully!', 'success');
       } else if (data.success && data.groups.length === 0) {
-        showSendStatus('No favorite groups found', 'error');
+        showToast('No favorite groups found', 'warning');
       } else {
-        showSendStatus(`Error: ${data.message}`, 'error');
+        showToast(`Error: ${data.message}`, 'error');
       }
     } catch (error) {
       console.error('Error loading favorite groups:', error);
-      showSendStatus(`Error: ${error.message}`, 'error');
+      showToast(`Error: ${error.message}`, 'error');
     } finally {
       loadFavoritesBtn.disabled = false;
+    }
+  }
+
+  // Auto-load favorite groups silently when groups are fetched
+  async function autoLoadFavorites() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/favorites`);
+      const data = await response.json();
+      
+      if (data.success && data.groups.length > 0) {
+        // Deselect all first
+        deselectAllGroups();
+        
+        // Select favorites
+        const favoriteIds = data.groups.map(group => group.id);
+        const checkboxes = document.querySelectorAll('#groups-list input[type="checkbox"]');
+        
+        checkboxes.forEach(checkbox => {
+          if (favoriteIds.includes(checkbox.value)) {
+            checkbox.checked = true;
+          }
+        });
+        
+        console.log(`Auto-loaded ${data.groups.length} favorite groups`);
+      }
+    } catch (error) {
+      console.log('No favorites file found or error loading favorites:', error.message);
     }
   }
 

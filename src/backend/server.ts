@@ -75,7 +75,7 @@ app.get('/admin', checkAuth, (req: Request, res: Response) => {
   res.sendFile(path.join(__dirname, '../../src/frontend/admin.html'));
 });
 
-// Main route - always redirect to login for authentication
+// Main route - redirect to login page
 app.get('/', (req: Request, res: Response) => {
   res.redirect('/login');
 });

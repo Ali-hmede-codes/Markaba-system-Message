@@ -6,102 +6,322 @@
   <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
   <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
   <meta name="bingbot" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
-  <title>مركبا - المنصة الاخبارية</title>
-  <link rel="stylesheet" href="css/styles.css">
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <title>لوحة التحكم - نظام إرسال الرسائل</title>
+  <link rel="stylesheet" href="css/colors.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="container">
-    <div class="header-section">
-      <div class="header-content">
-        <div class="logo-header">
-          <span class="header-icon">📰</span>
-          <h1>مركبا - المنصة الاخبارية</h1>
+  <!-- Navigation Header -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="nav-brand">
+        <img id="brand-logo" class="brand-logo" src="assets/logo.png" alt="Logo" style="display: none;">
+        <div class="brand-icon" id="brand-icon">📱</div>
+        <h1 class="brand-title" id="brand-title">نظام إرسال الرسائل</h1>
+      </div>
+      <div class="nav-status">
+        <div class="whatsapp-status-indicator">
+          <div class="status-dot offline" id="nav-status-dot"></div>
+          <span class="status-text" id="nav-status-text">غير متصل</span>
         </div>
-        <p class="header-subtitle">نظام إرسال الرسائل المتقدم</p>
       </div>
-      <button id="logout-main-btn" class="logout-btn">تسجيل الخروج</button>
-    </div>
-    
-    <!-- Admin Panel Tab (only visible for admin users) -->
-    <div id="admin-tab-container" style="display: none;">
-      <div class="admin-tab">
-        <button id="admin-panel-btn" class="admin-btn">🔧 لوحة الإدارة</button>
-      </div>
-    </div>
-    
-    <div id="status-container">
-      <h2>حالة الواتساب</h2>
-      <div id="status-message">غير متصل</div>
-    </div>
-    
-
-    
-    <div id="connection-container">
-      <div class="connection-buttons">
-        <button id="connect-btn">🔗 الاتصال بالواتساب</button>
-        <button id="logout-btn" style="display: none;">تسجيل الخروج</button>
-        <button id="force-reconnect-btn" style="display: none;">إعادة الاتصال القسري</button>
-        <button id="clear-auth-btn" style="display: none;">مسح بيانات المصادقة</button>
-      </div>
-      <div id="qrcode-container" style="display: none;">
-        <div id="qrcode"></div>
-      </div>
-    </div>
-    
-    <div id="groups-container" style="display: none;">
-      <h2>مجموعات الواتساب</h2>
-      <div class="group-controls">
-        <button id="refresh-groups-btn">🔄 تحميل المجموعات</button>
-        <button id="select-all-btn">تحديد الكل</button>
-        <button id="deselect-all-btn">إلغاء تحديد الكل</button>
-        <button id="save-favorites-btn">حفظ المفضلة</button>
-        <button id="load-favorites-btn">تحميل المفضلة</button>
-        <button id="toggle-link-preview-btn" class="link-preview-toggle">🔗 معاينة الروابط: تشغيل</button>
-      </div>
-      <div id="groups-list"></div>
-    </div>
-    
-
-    
-    <div id="message-container" style="display: none;">
-      <h2>إرسال الرسالة</h2>
-      <form id="message-form" enctype="multipart/form-data">
-        <div class="message-input-section">
-          <textarea id="message-input" placeholder="اكتب رسالتك هنا..."></textarea>
-        </div>
-        
-        <div class="media-upload-section">
-          <label for="media-input">📎 إرفاق وسائط (اختياري):</label>
-          <input type="file" id="media-input" name="media" accept=".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.svg,.mp4,.avi,.mov,.wmv,.flv,.mkv,.webm,.m4v,.3gp,.mp3,.wav,.aac,.ogg,.flac,.m4a,.wma,.pdf,.doc,.docx,.txt,.rtf,.odt,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.7z">
-          <div id="media-preview" style="display: none;">
-            <div class="preview-header">
-              <span id="preview-filename"></span>
-              <button type="button" id="remove-media">✕ إزالة</button>
+      <div class="nav-actions">
+        <div class="user-menu">
+          <button class="user-btn" id="user-menu-btn">
+            <div class="user-avatar">👤</div>
+            <span class="user-name">المستخدم</span>
+            <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <div class="user-dropdown" id="user-dropdown">
+            <div id="admin-panel-container" style="display: none;">
+              <button class="dropdown-item" id="admin-panel-btn">
+                <span class="item-icon">🔧</span>
+                لوحة الإدارة
+              </button>
             </div>
-            <div id="preview-content"></div>
+            <button class="dropdown-item" id="logout-btn">
+              <span class="item-icon">🚪</span>
+              تسجيل الخروج
+            </button>
           </div>
         </div>
-        
-        <div class="batch-settings">
-          <label for="batch-size">حجم الدفعة:</label>
-          <input type="number" id="batch-size" value="5" min="1">
-        </div>
-        
-        <button type="submit" id="send-btn">📤 إرسال للمجموعات المحددة</button>
-      </form>
-      
-      <div id="send-status"></div>
-      <div id="batch-progress" style="display: none;">
-        <div class="progress-info">
-          <span id="progress-text">Processing batch 1 of 3...</span>
-        </div>
-        <div class="progress-bar">
-          <div id="progress-fill"></div>
-        </div>
       </div>
     </div>
-  </div>
+  </nav>
+
+  <!-- Main Dashboard -->
+  <main class="dashboard">
+    <div class="dashboard-container">
+      <!-- Connection Controls -->
+      <section class="connection-controls" style="display: none;">
+        <div class="controls-container">
+          <button class="btn btn-primary" id="connect-btn">
+            <span class="btn-icon">🔗</span>
+            الاتصال بالواتساب
+          </button>
+          <button class="btn btn-secondary" id="force-reconnect-btn" style="display: none;">
+            <span class="btn-icon">🔄</span>
+            إعادة الاتصال
+          </button>
+          <button class="btn btn-danger" id="clear-auth-btn" style="display: none;">
+            <span class="btn-icon">🗑️</span>
+            مسح المصادقة
+          </button>
+        </div>
+      </section>
+
+      <!-- QR Code Section -->
+      <section class="qr-section" id="qrcode-container" style="display: none;">
+        <div class="qr-card">
+          <div class="card-header">
+            <div class="card-icon qr-icon">📱</div>
+            <h3 class="card-title">اتصال واتساب</h3>
+            <p class="card-subtitle">امسح الرمز للاتصال بحسابك</p>
+          </div>
+          <div class="card-content">
+            <div class="qr-wrapper">
+              <div class="qr-container" id="qr-container">
+                <div class="qr-placeholder">
+                  <div class="qr-icon-large">📱</div>
+                  <p>جاري تحميل رمز الاستجابة السريعة...</p>
+                  <div class="loading-spinner"></div>
+                </div>
+                <div id="qrcode"></div>
+              </div>
+              <div class="qr-instructions">
+                <div class="instruction-step">
+                  <span class="step-number">1</span>
+                  <span class="step-text">افتح واتساب على هاتفك</span>
+                </div>
+                <div class="instruction-step">
+                  <span class="step-number">2</span>
+                  <span class="step-text">اذهب إلى الإعدادات > الأجهزة المرتبطة</span>
+                </div>
+                <div class="instruction-step">
+                  <span class="step-number">3</span>
+                  <span class="step-text">امسح هذا الرمز</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Groups Management -->
+      <section class="groups-section" id="groups-container" style="display: none;">
+        <div class="section-card">
+          <div class="section-header">
+            <h2 class="section-title">إدارة المجموعات</h2>
+            <div class="section-actions">
+              <button class="btn btn-outline" id="save-favorites-btn">
+                <span class="btn-icon">⭐</span>
+                حفظ المفضلة
+              </button>
+              <button class="btn btn-outline" id="load-favorites-btn">
+                <span class="btn-icon">📂</span>
+                تحميل المفضلة
+              </button>
+            </div>
+          </div>
+          
+          <div class="groups-controls">
+            <div class="control-group">
+              <button class="btn btn-sm" id="select-all-btn">تحديد الكل</button>
+              <button class="btn btn-sm" id="deselect-all-btn">إلغاء التحديد</button>
+            </div>
+            <div class="control-group">
+              <button class="btn btn-sm toggle-btn" id="toggle-link-preview-btn">
+                <span class="btn-icon">🔗</span>
+                <span class="toggle-text">معاينة الروابط: تشغيل</span>
+              </button>
+            </div>
+          </div>
+          
+          <div class="groups-list" id="groups-list"></div>
+        </div>
+      </section>
+
+      <!-- Message Composer -->
+      <section class="message-section" id="message-container" style="display: none;">
+        <div class="section-card">
+          <div class="section-header">
+            <h2 class="section-title">إرسال الرسالة</h2>
+          </div>
+          
+          <form id="message-form" class="message-form" enctype="multipart/form-data">
+            <div class="form-group">
+              <label class="form-label">نص الرسالة</label>
+              <textarea id="message-input" class="form-textarea" placeholder="اكتب رسالتك هنا..."></textarea>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label" for="media-input">
+                <span class="label-icon">📎</span>
+                إرفاق وسائط (اختياري)
+              </label>
+              <input type="file" id="media-input" name="media" class="form-file" 
+                     accept=".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.svg,.mp4,.avi,.mov,.wmv,.flv,.mkv,.webm,.m4v,.3gp,.mp3,.wav,.aac,.ogg,.flac,.m4a,.wma,.pdf,.doc,.docx,.txt,.rtf,.odt,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.7z">
+              
+              <div id="media-preview" class="media-preview" style="display: none;">
+                <div class="preview-header">
+                  <span id="preview-filename" class="preview-filename"></span>
+                  <button type="button" id="remove-media" class="remove-btn">
+                    <span>✕</span>
+                  </button>
+                </div>
+                <div id="preview-content" class="preview-content"></div>
+              </div>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="batch-size">حجم الدفعة</label>
+                <input type="number" id="batch-size" class="form-input" value="5" min="1">
+              </div>
+            </div>
+            
+            <button type="submit" id="send-btn" class="btn btn-primary btn-large">
+              <span class="btn-icon">📤</span>
+              إرسال للمجموعات المحددة
+            </button>
+          </form>
+          
+          <div id="send-status" class="send-status"></div>
+          
+          <div id="batch-progress" class="progress-section" style="display: none;">
+            <div class="progress-header">
+              <span id="progress-text" class="progress-text">معالجة الدفعة 1 من 3...</span>
+            </div>
+            <div class="progress-bar">
+              <div id="progress-fill" class="progress-fill"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+  
+  <script>
+    // Load global configuration
+    async function loadGlobalConfig() {
+      try {
+        const response = await fetch('config/global.json');
+        const config = await response.json();
+        
+        // Update page title
+        document.title = `لوحة التحكم - ${config.systemName}`;
+        
+        // Update brand elements
+        const brandTitle = document.getElementById('brand-title');
+        const brandIcon = document.getElementById('brand-icon');
+        const brandLogo = document.getElementById('brand-logo');
+        
+        if (brandTitle) {
+          brandTitle.textContent = config.systemName;
+        }
+        
+        // Show logo if available, hide icon
+        if (config.logo && config.logo.src && brandLogo) {
+          brandLogo.src = config.logo.src;
+          brandLogo.alt = config.logo.alt || config.systemName;
+          brandLogo.style.display = 'block';
+          if (brandIcon) brandIcon.style.display = 'none';
+        }
+        
+        // Apply branding colors if available
+        if (config.branding) {
+          const root = document.documentElement;
+          if (config.branding.primaryColor) {
+            root.style.setProperty('--primary-600', config.branding.primaryColor);
+          }
+          if (config.branding.secondaryColor) {
+            root.style.setProperty('--primary-700', config.branding.secondaryColor);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load global configuration:', error);
+      }
+    }
+    
+    // Load configuration when page loads
+    document.addEventListener('DOMContentLoaded', loadGlobalConfig);
+    
+    // Modern UI Interactions
+    document.addEventListener('DOMContentLoaded', function() {
+      // User menu dropdown functionality
+      const userMenuBtn = document.getElementById('user-menu-btn');
+      const userDropdown = document.getElementById('user-dropdown');
+      
+      if (userMenuBtn && userDropdown) {
+        userMenuBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const isOpen = userDropdown.classList.contains('show');
+          
+          if (isOpen) {
+            userDropdown.classList.remove('show');
+            userMenuBtn.setAttribute('aria-expanded', 'false');
+          } else {
+            userDropdown.classList.add('show');
+            userMenuBtn.setAttribute('aria-expanded', 'true');
+          }
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+          if (!userMenuBtn.contains(e.target) && !userDropdown.contains(e.target)) {
+            userDropdown.classList.remove('show');
+            userMenuBtn.setAttribute('aria-expanded', 'false');
+          }
+        });
+      }
+      
+      // Add fade-in animation to sections when they become visible
+      const sections = document.querySelectorAll('.status-card, .section-card, .qr-card');
+      sections.forEach(section => {
+        section.classList.add('fade-in');
+      });
+      
+      // Enhanced button interactions
+      const buttons = document.querySelectorAll('.btn');
+      buttons.forEach(btn => {
+        btn.addEventListener('mouseenter', function() {
+          this.style.transform = 'translateY(-1px)';
+        });
+        
+        btn.addEventListener('mouseleave', function() {
+          this.style.transform = 'translateY(0)';
+        });
+        
+        btn.addEventListener('mousedown', function() {
+          this.style.transform = 'translateY(1px)';
+        });
+        
+        btn.addEventListener('mouseup', function() {
+          this.style.transform = 'translateY(-1px)';
+        });
+      });
+      
+      // Card hover effects
+      const cards = document.querySelectorAll('.status-card');
+      cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+          this.style.transform = 'translateY(-4px)';
+          this.style.boxShadow = 'var(--shadow-lg)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+          this.style.transform = 'translateY(0)';
+          this.style.boxShadow = 'var(--shadow-sm)';
+        });
+      });
+    });
+  </script>
+  
+  <!-- Toast Notifications Container -->
+  <div class="toast-container" id="toast-container"></div>
   
   <script src="js/app.js"></script>
 </body>
