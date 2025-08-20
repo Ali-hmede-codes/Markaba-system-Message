@@ -1043,6 +1043,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (logoutBtn) logoutBtn.style.display = 'none';
         if (forceReconnectBtn) forceReconnectBtn.style.display = 'none';
         if (clearAuthBtn) clearAuthBtn.style.display = 'none';
+        // Ensure account logout button is always visible for admins
+        if (logoutMainBtn) logoutMainBtn.style.display = 'block';
       } else {
         // Hide admin tab for non-admin users
         if (adminTabContainer) {
@@ -1057,6 +1059,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (logoutBtn) logoutBtn.style.display = 'none';
         if (forceReconnectBtn) forceReconnectBtn.style.display = 'none';
         if (clearAuthBtn) clearAuthBtn.style.display = 'none';
+        // Ensure account logout button is always visible for regular users
+        if (logoutMainBtn) logoutMainBtn.style.display = 'block';
       }
     } catch (error) {
       console.error('Error checking user role:', error);
@@ -1068,6 +1072,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (logoutBtn) logoutBtn.style.display = 'none';
       if (forceReconnectBtn) forceReconnectBtn.style.display = 'none';
       if (clearAuthBtn) clearAuthBtn.style.display = 'none';
+      // Ensure account logout button is always visible even on error
+      if (logoutMainBtn) logoutMainBtn.style.display = 'block';
     }
   }
 
