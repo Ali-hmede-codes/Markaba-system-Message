@@ -3,10 +3,12 @@
   "ignore": [
     "session.json",
     "favorites.json",
+    "cachedGroups.json",
     ".wwebjs_auth/**",
     ".wwebjs_cache/**",
     "node_modules/**",
-    "*.log"
+    "*.log",
+    "uploads/**"
   ],
   "ext": "js,json",
   "env": {

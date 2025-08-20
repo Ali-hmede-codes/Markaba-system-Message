@@ -297,10 +297,8 @@ document.addEventListener('DOMContentLoaded', () => {
           if (isConnected && authState === 'READY' && !wasConnected) {
             setTimeout(() => {
               fetchGroups();
-              
-
             }, 3000); // Reduced delay for Baileys
-            clearInterval(checkInterval);
+            // Keep status checking active - don't clear interval
           }
           
           // Also fetch groups if we're already ready but don't have groups loaded
@@ -679,6 +677,49 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       
+      // Send to Telegram after WhatsApp groups
+      let telegramSuccess = false;
+      let telegramError = null;
+      
+      try {
+        // Prepare Telegram request
+        const telegramFormData = new FormData();
+        telegramFormData.append('message', message);
+        
+        let telegramResponse;
+        
+        if (selectedFile) {
+          // Send media message to Telegram
+          telegramFormData.append('media', selectedFile);
+          telegramResponse = await fetch('/api/telegram/send-media', {
+            method: 'POST',
+            body: telegramFormData
+          });
+        } else {
+          // Send text message to Telegram
+          telegramResponse = await fetch('/api/telegram/send-message', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ message })
+          });
+        }
+        
+        const telegramData = await telegramResponse.json();
+        
+        if (telegramResponse.ok && telegramData.success) {
+          telegramSuccess = true;
+          console.log('Message sent to Telegram successfully');
+        } else {
+          telegramError = telegramData.error || 'Failed to send to Telegram';
+          console.error('Telegram send error:', telegramError);
+        }
+      } catch (error) {
+        telegramError = error.message;
+        console.error('Error sending to Telegram:', error);
+      }
+      
       // Complete the progress bar
       progressFill.style.width = '100%';
       
@@ -691,6 +732,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let statusMessage = `Message${mediaText} sent to ${selectedGroups.length} groups successfully!`;
         let statusType = 'success';
+        
+        // Add Telegram status to the message
+        if (telegramSuccess) {
+          statusMessage += ' Also sent to Telegram.';
+        } else if (telegramError) {
+          statusMessage += ` Warning: Failed to send to Telegram (${telegramError}).`;
+          statusType = 'warning';
+        }
         
         showSendStatus(statusMessage, statusType);
         messageInput.value = '';
