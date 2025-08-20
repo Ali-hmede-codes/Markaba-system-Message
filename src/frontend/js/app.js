@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Admin event listeners
   if (adminPanelBtn) {
     adminPanelBtn.addEventListener('click', () => {
-      window.location.href = '/admin.html';
+      window.location.href = '/admin';
     });
   }
   

@@ -115,7 +115,8 @@
         const formData = new FormData(loginForm);
         const loginData = {
           username: formData.get('username'),
-          password: formData.get('password')
+          password: formData.get('password'),
+          rememberMe: document.getElementById('rememberMe').checked
         };
         
         try {
@@ -130,9 +131,15 @@
           const result = await response.json();
           
           if (response.ok) {
-            // Store token and redirect
+            // Store token and redirect based on user role
             localStorage.setItem('authToken', result.token);
-            window.location.href = '/admin.html';
+            
+            // Check user role and redirect accordingly
+            if (result.user && result.user.role === 'admin') {
+              window.location.href = '/dashboard';
+            } else {
+              window.location.href = '/admin';
+            }
           } else {
             const messageDiv = document.getElementById('loginMessage');
             messageDiv.textContent = result.message || 'فشل في تسجيل الدخول';

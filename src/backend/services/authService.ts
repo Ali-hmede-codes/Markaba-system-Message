@@ -155,7 +155,7 @@ class AuthService {
   async createSession(userId: number, ipAddress?: string, userAgent?: string, rememberMe?: boolean): Promise<string> {
     try {
       const sessionId = uuidv4();
-      const sessionDuration = rememberMe ? 30 * 24 * 60 * 60 * 1000 : this.sessionDuration; // 30 days or 24 hours
+      const sessionDuration = 30 * 24 * 60 * 60 * 1000; // Always 30 days
       const expiresAt = new Date(Date.now() + sessionDuration);
 
       const sql = `

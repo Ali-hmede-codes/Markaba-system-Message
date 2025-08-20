@@ -37,8 +37,8 @@ router.post('/login', async (req: Request, res: Response) => {
       });
     }
 
-    // Create session with extended duration if remember me is checked
-    const sessionDuration = rememberMe ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000; // 30 days or 24 hours
+    // Create session with 30-day duration (always extended)
+    const sessionDuration = 30 * 24 * 60 * 60 * 1000; // Always 30 days
     const sessionId = await authService.createSession(
       user.id,
       req.ip,
@@ -54,10 +54,8 @@ router.post('/login', async (req: Request, res: Response) => {
       sameSite: 'strict'
     };
 
-    // For remember me, set expires date to make cookie persistent
-    if (rememberMe) {
-      cookieOptions.expires = new Date(Date.now() + sessionDuration);
-    }
+    // Always set expires date to make cookie persistent for 30 days
+    cookieOptions.expires = new Date(Date.now() + sessionDuration);
 
     res.cookie('session_id', sessionId, cookieOptions);
 
