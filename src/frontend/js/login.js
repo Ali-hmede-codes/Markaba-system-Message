@@ -39,6 +39,17 @@ document.addEventListener('DOMContentLoaded', function() {
 // Check if user is already authenticated
 async function checkAuthStatus() {
     try {
+        // First check if user has rememberMe data in localStorage
+        const rememberedUser = localStorage.getItem('rememberedUser');
+        if (rememberedUser) {
+            const userData = JSON.parse(rememberedUser);
+            // Pre-fill username if remembered
+            if (userData.username && usernameInput) {
+                usernameInput.value = userData.username;
+                document.getElementById('rememberMe').checked = true;
+            }
+        }
+        
         const response = await fetch(`${API_BASE_URL}/auth/status`, {
             method: 'GET',
             credentials: 'include'
@@ -93,6 +104,21 @@ async function handleLogin(e) {
             const data = await response.json();
             
             if (data.success) {
+                // Handle remember me functionality
+                if (rememberMe) {
+                    // Store user data in localStorage for future logins
+                    const userDataToRemember = {
+                        username: username,
+                        fullName: data.user.full_name,
+                        role: data.user.role,
+                        rememberedAt: new Date().toISOString()
+                    };
+                    localStorage.setItem('rememberedUser', JSON.stringify(userDataToRemember));
+                } else {
+                    // Clear remembered user data if rememberMe is not checked
+                    localStorage.removeItem('rememberedUser');
+                }
+                
                 showMessage('تم تسجيل الدخول بنجاح! جاري التحويل...', 'success');
                 
                 // Redirect after a short delay
@@ -154,6 +180,18 @@ function clearMessage() {
     loginMessage.textContent = '';
     loginMessage.className = 'message';
 }
+
+// Clear remembered user data
+function clearRememberedUser() {
+    localStorage.removeItem('rememberedUser');
+    usernameInput.value = '';
+    passwordInput.value = '';
+    document.getElementById('rememberMe').checked = false;
+    showMessage('Remembered login data cleared', 'info');
+}
+
+// Make clearRememberedUser globally accessible
+window.clearRememberedUser = clearRememberedUser;
 
 // Handle network errors
 window.addEventListener('online', function() {

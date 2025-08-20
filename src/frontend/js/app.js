@@ -125,16 +125,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize media upload functionality
   initializeMediaUpload();
 
-  // Event listeners
-  connectBtn.addEventListener('click', initializeWhatsApp);
-  logoutBtn.addEventListener('click', logout);
-  forceReconnectBtn.addEventListener('click', forceReconnect);
-  clearAuthBtn.addEventListener('click', clearAuthData);
-  selectAllBtn.addEventListener('click', selectAllGroups);
-  deselectAllBtn.addEventListener('click', deselectAllGroups);
-  saveFavoritesBtn.addEventListener('click', saveFavoriteGroups);
-  loadFavoritesBtn.addEventListener('click', loadFavoriteGroups);
-  toggleLinkPreviewBtn.addEventListener('click', toggleLinkPreview);
+  // Event listeners with null checks
+  if (connectBtn) connectBtn.addEventListener('click', initializeWhatsApp);
+  if (logoutBtn) logoutBtn.addEventListener('click', logout);
+  if (forceReconnectBtn) forceReconnectBtn.addEventListener('click', forceReconnect);
+  if (clearAuthBtn) clearAuthBtn.addEventListener('click', clearAuthData);
+  if (selectAllBtn) selectAllBtn.addEventListener('click', selectAllGroups);
+  if (deselectAllBtn) deselectAllBtn.addEventListener('click', deselectAllGroups);
+  if (saveFavoritesBtn) saveFavoritesBtn.addEventListener('click', saveFavoriteGroups);
+  if (loadFavoritesBtn) loadFavoritesBtn.addEventListener('click', loadFavoriteGroups);
+  if (toggleLinkPreviewBtn) toggleLinkPreviewBtn.addEventListener('click', toggleLinkPreview);
   
   // Admin event listeners
   if (adminPanelBtn) {
