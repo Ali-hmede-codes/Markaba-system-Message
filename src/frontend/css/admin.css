@@ -874,6 +874,53 @@ body.admin-page .form-control:hover {
     }
 }
 
+/* Desktop/PC Styles - Full table view */
+@media (min-width: 1024px) {
+    .users-table-container {
+        overflow-x: visible !important;
+        border-radius: var(--radius-lg) !important;
+    }
+    
+    body.admin-page .admin-table {
+        width: 100% !important;
+        min-width: auto !important;
+        table-layout: auto !important;
+    }
+    
+    body.admin-page .admin-table th,
+    body.admin-page .admin-table td {
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+    
+    body.admin-page .actions-cell {
+        min-width: 200px !important;
+        flex-direction: row !important;
+        gap: var(--space-2) !important;
+        justify-content: flex-start !important;
+    }
+}
+
+/* Tablet Styles */
+@media (max-width: 1023px) and (min-width: 769px) {
+    .users-table-container {
+        overflow-x: auto !important;
+        border-radius: var(--radius-lg) !important;
+    }
+    
+    body.admin-page .admin-table {
+        min-width: 800px !important;
+    }
+    
+    body.admin-page .actions-cell {
+        min-width: 160px !important;
+        flex-direction: row !important;
+        gap: var(--space-1) !important;
+    }
+}
+
+/* Mobile Styles */
 @media (max-width: 768px) {
     body.admin-page .admin-header {
         padding: var(--space-4) !important;

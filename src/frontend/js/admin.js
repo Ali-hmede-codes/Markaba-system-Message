@@ -324,6 +324,35 @@ document.addEventListener('DOMContentLoaded', () => {
             showMessage('Failed to deactivate user', 'error');
         }
     };
+
+    window.activateUser = async function(userId) {
+        if (!confirm('Are you sure you want to activate this user?')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/users/activate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({ id: userId })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showMessage('User activated successfully', 'success');
+                await loadUsers();
+            } else {
+                showMessage(data.message || 'Failed to activate user', 'error');
+            }
+        } catch (error) {
+            console.error('Activate user error:', error);
+            showMessage('Failed to activate user', 'error');
+        }
+    };
     
     window.closeEditModal = function() {
         editUserModal.classList.remove('show');
