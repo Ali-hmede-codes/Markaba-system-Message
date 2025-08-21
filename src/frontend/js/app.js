@@ -440,7 +440,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   function renderGroups() {
-    groupsList.innerHTML = '';
+    // Create collapsible container structure
+    groupsList.innerHTML = `
+      <div class="groups-list-container">
+        <div class="groups-list-header" id="groups-list-header">
+          <span class="groups-list-title">قائمة المجموعات (${groups.length})</span>
+          <span class="groups-list-arrow" id="groups-list-arrow">▼</span>
+        </div>
+        <div class="groups-list-content" id="groups-list-content">
+          <div class="groups-items" id="groups-items"></div>
+        </div>
+      </div>
+    `;
+
+    // Populate groups
+    const groupsItems = document.getElementById('groups-items');
     groups.forEach(group => {
       const div = document.createElement('div');
       div.className = 'group-item';
@@ -448,11 +462,36 @@ document.addEventListener('DOMContentLoaded', () => {
         <input type="checkbox" id="${group.id}" value="${group.id}">
         <label for="${group.id}">${group.name} (${group.participants} members)</label>
       `;
-      groupsList.appendChild(div);
+      groupsItems.appendChild(div);
     });
+
+    // Add toggle functionality
+    setupGroupsToggle();
 
     // Add refresh button outside groups-list
     addRefreshButton();
+  }
+
+  function setupGroupsToggle() {
+    const header = document.getElementById('groups-list-header');
+    const content = document.getElementById('groups-list-content');
+    const arrow = document.getElementById('groups-list-arrow');
+    
+    if (header && content && arrow) {
+      header.addEventListener('click', () => {
+        const isCollapsed = content.classList.contains('collapsed');
+        
+        if (isCollapsed) {
+          content.classList.remove('collapsed');
+          arrow.textContent = '▼';
+          arrow.style.transform = 'rotate(0deg)';
+        } else {
+          content.classList.add('collapsed');
+          arrow.textContent = '▶';
+          arrow.style.transform = 'rotate(-90deg)';
+        }
+      });
+    }
   }
 
   function addRefreshButton() {
@@ -998,7 +1037,10 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         });
         
-        showToast('Favorite groups loaded successfully!', 'success');
+        // Auto-collapse the groups list after loading favorites
+        collapseGroupsList();
+        
+        showToast(`تم تحميل ${data.groups.length} مجموعة مفضلة`, 'success');
       } else if (data.success && data.groups.length === 0) {
         showToast('No favorite groups found', 'warning');
       } else {
@@ -1009,6 +1051,17 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast(`Error: ${error.message}`, 'error');
     } finally {
       loadFavoritesBtn.disabled = false;
+    }
+  }
+
+  function collapseGroupsList() {
+    const content = document.getElementById('groups-list-content');
+    const arrow = document.getElementById('groups-list-arrow');
+    
+    if (content && arrow && !content.classList.contains('collapsed')) {
+      content.classList.add('collapsed');
+      arrow.textContent = '▶';
+      arrow.style.transform = 'rotate(-90deg)';
     }
   }
 
@@ -1032,7 +1085,10 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         });
         
-        console.log(`Auto-loaded ${data.groups.length} favorite groups`);
+        // Auto-collapse the groups list after loading favorites
+        collapseGroupsList();
+        
+        console.log(`Auto-loaded ${data.groups.length} favorite groups and collapsed list`);
       }
     } catch (error) {
       console.log('No favorites file found or error loading favorites:', error.message);
