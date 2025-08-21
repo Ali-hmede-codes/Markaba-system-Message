@@ -60,9 +60,9 @@ async function checkAuthStatus() {
         if (data.success && data.authenticated) {
             // User is already logged in, redirect based on role
             if (data.user && data.user.role === 'admin') {
-                window.location.href = '/admin.html';
+                window.location.href = '/admin';
             } else {
-                window.location.href = '/index.html';
+                window.location.href = '/dashboard';
             }
         }
     } catch (error) {
@@ -74,6 +74,12 @@ async function checkAuthStatus() {
 // Handle login form submission
 async function handleLogin(e) {
     e.preventDefault();
+    e.stopPropagation();
+    
+    // Ensure form never submits via browser default
+    if (e.target) {
+        e.target.action = 'javascript:void(0);';
+    }
     
     const username = usernameInput.value.trim();
     const password = passwordInput.value;
@@ -128,9 +134,9 @@ async function handleLogin(e) {
                 // Redirect after a short delay based on user role
                 setTimeout(() => {
                     if (data.user && data.user.role === 'admin') {
-                        window.location.href = '/admin.html';
+                        window.location.href = '/admin';
                     } else {
-                        window.location.href = '/index.html';
+                        window.location.href = '/dashboard';
                     }
                 }, 1000);
             } else {
