@@ -35,7 +35,12 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const data = await response.json();
             
-            if (!data.success || !data.authenticated || data.user.role !== 'admin') {
+            if (!data.success || !data.authenticated) {
+                window.location.href = '/login';
+                return;
+            }
+            
+            if (data.user.role !== 'admin') {
                 window.location.href = '/dashboard';
                 return;
             }
