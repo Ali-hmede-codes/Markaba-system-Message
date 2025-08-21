@@ -1039,11 +1039,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Check user role and show admin tab if admin
+  // Check user authentication and role
   async function checkUserRole() {
     try {
       const response = await fetch(`${AUTH_API_BASE_URL}/status`);
       const data = await response.json();
+      
+      // Check if user is authenticated
+      if (!data.success || !data.authenticated || !data.user) {
+        // Redirect to login if not authenticated
+        window.location.href = '/login';
+        return;
+      }
       
       if (data.success && data.user && data.user.role === 'admin') {
         // Show admin tab for admin users

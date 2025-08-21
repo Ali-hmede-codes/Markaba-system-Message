@@ -36,7 +36,8 @@ interface UserSession {
 
 class AuthService {
   private saltRounds = 12;
-  private sessionDuration = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+  private sessionDuration = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
+  private shortSessionDuration = 24 * 60 * 60 * 1000; // 24 hours for non-remember sessions
 
   async hashPassword(password: string): Promise<string> {
     return await bcrypt.hash(password, this.saltRounds);
@@ -155,8 +156,11 @@ class AuthService {
   async createSession(userId: number, ipAddress?: string, userAgent?: string, rememberMe?: boolean): Promise<string> {
     try {
       const sessionId = uuidv4();
-      const sessionDuration = 30 * 24 * 60 * 60 * 1000; // Always 30 days
+      // Use 30 days if rememberMe is true, otherwise use 24 hours
+      const sessionDuration = rememberMe ? this.sessionDuration : this.shortSessionDuration;
       const expiresAt = new Date(Date.now() + sessionDuration);
+
+      console.log(`Creating session for user ${userId}: rememberMe=${rememberMe}, duration=${sessionDuration / (24 * 60 * 60 * 1000)} days`);
 
       const sql = `
         INSERT INTO user_sessions (session_id, user_id, ip_address, user_agent, expires_at, is_active)

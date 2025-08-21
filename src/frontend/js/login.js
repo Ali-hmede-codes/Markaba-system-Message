@@ -58,8 +58,12 @@ async function checkAuthStatus() {
         const data = await response.json();
         
         if (data.success && data.authenticated) {
-            // User is already logged in, redirect to dashboard
-            window.location.href = '/dashboard';
+            // User is already logged in, redirect based on role
+            if (data.user && data.user.role === 'admin') {
+                window.location.href = '/admin.html';
+            } else {
+                window.location.href = '/index.html';
+            }
         }
     } catch (error) {
         console.error('Auth status check error:', error);
@@ -121,9 +125,13 @@ async function handleLogin(e) {
                 
                 showMessage('تم تسجيل الدخول بنجاح! جاري التحويل...', 'success');
                 
-                // Redirect after a short delay
+                // Redirect after a short delay based on user role
                 setTimeout(() => {
-                    window.location.href = '/dashboard';
+                    if (data.user && data.user.role === 'admin') {
+                        window.location.href = '/admin.html';
+                    } else {
+                        window.location.href = '/index.html';
+                    }
                 }, 1000);
             } else {
                 showMessage(data.message || 'فشل تسجيل الدخول', 'error');
