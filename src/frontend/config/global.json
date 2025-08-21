@@ -1,5 +1,6 @@
 {
   "systemName": "CHATRIX",
+  "adminTitle": "الإدارة",
   "logo": {
     "type": "image",
     "src": "/assets/logo.png",

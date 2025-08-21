@@ -1,18 +1,21 @@
-/* Modern Admin Panel Styles using Color System */
+/* Modern Admin Panel Styles using Color System - Dashboard Style */
 /* Override main styles.css for admin panel */
 body.admin-page {
-    direction: ltr !important;
+    direction: rtl !important;
     padding: 0 !important;
     margin: 0 !important;
     background-color: var(--background) !important;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+    font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
     color: var(--text-primary) !important;
     line-height: var(--line-height-normal) !important;
+    font-size: var(--font-size-base) !important;
+    min-height: 100vh !important;
 }
 
 body.admin-page * {
-    direction: ltr !important;
+    direction: rtl !important;
     font-family: inherit !important;
+    box-sizing: border-box !important;
 }
 
 body.admin-page .admin-container {
@@ -25,8 +28,8 @@ body.admin-page .admin-container {
     background: var(--background);
     display: flex;
     flex-direction: column;
-    direction: ltr;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    direction: rtl;
+    font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
     padding: 0;
 }
@@ -55,6 +58,7 @@ body.admin-page .admin-header h1 {
     letter-spacing: -0.025em !important;
     color: var(--text-on-primary) !important;
     text-shadow: none !important;
+    font-family: 'Cairo', sans-serif !important;
 }
 
 body.admin-page .admin-nav {
@@ -106,6 +110,29 @@ body.admin-page .nav-btn.logout:hover {
     cursor: pointer;
     padding: 0;
     z-index: 250;
+}
+
+/* Desktop Table Styles - Show full table */
+@media (min-width: 769px) {
+    body.admin-page .admin-table {
+        table-layout: auto !important;
+        width: 100% !important;
+        min-width: auto !important;
+    }
+    
+    body.admin-page .actions-cell {
+        min-width: 200px !important;
+        justify-content: flex-start !important;
+    }
+    
+    body.admin-page .actions-cell .btn {
+        margin-left: var(--space-1) !important;
+        min-width: auto !important;
+    }
+    
+    .users-table-container {
+        overflow-x: visible !important;
+    }
 }
 
 .mobile-menu-toggle span {
@@ -317,9 +344,11 @@ body.admin-page .btn-danger {
     background: var(--error-600) !important;
     color: var(--text-on-primary) !important;
     border-color: var(--error-600) !important;
-    padding: var(--space-2) var(--space-4) !important;
+    padding: var(--space-2) var(--space-3) !important;
     font-size: var(--font-size-xs) !important;
     box-shadow: var(--shadow-sm) !important;
+    min-width: auto !important;
+    white-space: nowrap !important;
 }
 
 body.admin-page .btn-danger:hover:not(:disabled) {
@@ -329,13 +358,15 @@ body.admin-page .btn-danger:hover:not(:disabled) {
     box-shadow: var(--shadow-md) !important;
 }
 
-.btn-warning {
-    background: var(--warning-500);
-    color: var(--warning-900);
-    border-color: var(--warning-500);
-    padding: var(--space-2) var(--space-4);
-    font-size: var(--font-size-xs);
-    box-shadow: var(--shadow-sm);
+body.admin-page .btn-warning {
+    background: var(--warning-500) !important;
+    color: var(--warning-900) !important;
+    border-color: var(--warning-500) !important;
+    padding: var(--space-2) var(--space-3) !important;
+    font-size: var(--font-size-xs) !important;
+    box-shadow: var(--shadow-sm) !important;
+    min-width: auto !important;
+    white-space: nowrap !important;
 }
 
 .btn-warning:hover:not(:disabled) {
@@ -345,13 +376,15 @@ body.admin-page .btn-danger:hover:not(:disabled) {
     box-shadow: var(--shadow-md);
 }
 
-.btn-info {
-    background: var(--primary-500);
-    color: var(--text-on-primary);
-    border-color: var(--primary-500);
-    padding: var(--space-2) var(--space-4);
-    font-size: var(--font-size-xs);
-    box-shadow: var(--shadow-sm);
+body.admin-page .btn-info {
+    background: var(--primary-500) !important;
+    color: var(--text-on-primary) !important;
+    border-color: var(--primary-500) !important;
+    padding: var(--space-2) var(--space-3) !important;
+    font-size: var(--font-size-xs) !important;
+    box-shadow: var(--shadow-sm) !important;
+    min-width: auto !important;
+    white-space: nowrap !important;
 }
 
 .btn-info:hover:not(:disabled) {
@@ -384,6 +417,13 @@ body.admin-page .btn-danger:hover:not(:disabled) {
     box-shadow: var(--shadow-lg);
     overflow: hidden;
     border: 1px solid var(--border-light);
+    margin-top: var(--space-6);
+    transition: var(--transition-normal);
+}
+
+.users-table-container:hover {
+    box-shadow: var(--shadow-xl);
+    transform: translateY(-1px);
 }
 
 body.admin-page .admin-table {
@@ -393,10 +433,11 @@ body.admin-page .admin-table {
     background: var(--surface) !important;
     border-radius: var(--radius-lg) !important;
     overflow: hidden !important;
-    box-shadow: var(--shadow-sm) !important;
+    box-shadow: var(--shadow-lg) !important;
     margin-top: var(--space-6) !important;
     font-family: inherit !important;
-    direction: ltr !important;
+    direction: rtl !important;
+    border: 1px solid var(--border-light) !important;
 }
 
 body.admin-page .admin-table th {
@@ -404,7 +445,7 @@ body.admin-page .admin-table th {
     color: var(--text-primary) !important;
     font-weight: var(--font-weight-semibold) !important;
     padding: var(--space-4) var(--space-5) !important;
-    text-align: left !important;
+    text-align: right !important;
     border-bottom: 2px solid var(--border-medium) !important;
     font-size: var(--font-size-sm) !important;
     text-transform: uppercase !important;
@@ -416,13 +457,15 @@ body.admin-page .admin-table td {
     padding: var(--space-4) var(--space-5) !important;
     border-bottom: 1px solid var(--border-light) !important;
     vertical-align: middle !important;
-    color: var(--text-secondary) !important;
+    color: var(--text-primary) !important;
     font-size: var(--font-size-sm) !important;
     font-family: inherit !important;
+    text-align: right !important;
 }
 
-body.admin-page .admin-table tr:hover {
-    background: var(--primary-50) !important;
+body.admin-page .admin-table tbody tr:hover {
+    background: var(--surface-variant) !important;
+    transition: var(--transition-fast) !important;
 }
 
 body.admin-page .admin-table tr:last-child td {
@@ -471,7 +514,9 @@ body.admin-page .role-user {
 body.admin-page .actions-cell {
     display: flex !important;
     gap: var(--space-2) !important;
-    flex-wrap: wrap !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
 }
 
 /* Modern Form Styles */
@@ -481,6 +526,11 @@ body.admin-page .actions-cell {
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-lg);
     border: 1px solid var(--border-light);
+    transition: var(--transition-normal);
+}
+
+.admin-form:hover {
+    box-shadow: var(--shadow-xl);
 }
 
 .form-row {
@@ -995,9 +1045,28 @@ body.admin-page .form-control:hover {
     }
     
     body.admin-page .actions-cell {
-        min-width: 140px !important;
-        flex-direction: column !important;
+        min-width: 120px !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
         gap: var(--space-1) !important;
+        justify-content: center !important;
+    }
+    
+    body.admin-page .actions-cell .btn {
+        font-size: 10px !important;
+        padding: var(--space-1) var(--space-2) !important;
+        margin-left: 0 !important;
+        min-width: 50px !important;
+        flex: 0 0 auto !important;
+    }
+    
+    /* Table scroll for mobile */
+    .users-table-container {
+        overflow-x: auto !important;
+    }
+    
+    body.admin-page .admin-table {
+        min-width: 600px !important;
     }
     
     .section-actions {
@@ -1062,6 +1131,11 @@ body.admin-page .form-control:hover {
     .btn {
         padding: var(--space-3) var(--space-4);
         font-size: var(--font-size-sm);
+    }
+    
+    .nav-container {
+        padding: 0 var(--space-4);
+        height: 60px;
     }
 }
 
