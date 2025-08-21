@@ -671,7 +671,7 @@ document.addEventListener('DOMContentLoaded', () => {
           progressFill.offsetHeight; // Trigger reflow
           
           if (i < totalBatches) {
-            await new Promise(resolve => setTimeout(resolve, 500)); // 1.5 second delay
+            await new Promise(resolve => setTimeout(resolve, 800)); // 0.8 second delay
           }
         }
       } else if (groupResponse.status === 429) {
