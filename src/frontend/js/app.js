@@ -557,35 +557,148 @@ document.addEventListener('DOMContentLoaded', () => {
       if (mediaPreview) mediaPreview.style.display = 'block';
       
       const fileType = file.type;
+      const fileSize = (file.size / 1024 / 1024).toFixed(2);
       if (previewContent) previewContent.innerHTML = '';
       
+      // Create rectangular container
+      const container = document.createElement('div');
+      container.className = 'media-container';
+      
+      // Create media info section
+      const mediaInfo = document.createElement('div');
+      mediaInfo.className = 'media-info';
+      
+      const fileName = document.createElement('div');
+      fileName.className = 'file-name';
+      fileName.textContent = file.name;
+      
+      const fileDetails = document.createElement('div');
+      fileDetails.className = 'file-details';
+      fileDetails.innerHTML = `Type: ${file.type || 'Unknown'}<br>Size: ${fileSize} MB`;
+      
+      mediaInfo.appendChild(fileName);
+      mediaInfo.appendChild(fileDetails);
+      
+      // Create thumbnail section
+      const thumbnail = document.createElement('div');
+      thumbnail.className = 'media-thumbnail';
+      
       if (fileType.startsWith('image/')) {
-        const container = document.createElement('div');
-        container.className = 'media-container';
         const img = document.createElement('img');
-        img.src = URL.createObjectURL(file);
-        img.onload = () => URL.revokeObjectURL(img.src);
-        container.appendChild(img);
-        if (previewContent) previewContent.appendChild(container);
+        const objectUrl = URL.createObjectURL(file);
+        img.src = objectUrl;
+        img.onload = () => URL.revokeObjectURL(objectUrl);
+        thumbnail.appendChild(img);
+        
+        // Add click handler for modal
+        thumbnail.addEventListener('click', () => openMediaModal(file, 'image'));
       } else if (fileType.startsWith('video/')) {
-        const container = document.createElement('div');
-        container.className = 'media-container';
         const video = document.createElement('video');
-        video.src = URL.createObjectURL(file);
-        video.controls = true;
-        video.onload = () => URL.revokeObjectURL(video.src);
-        container.appendChild(video);
-        if (previewContent) previewContent.appendChild(container);
+        const objectUrl = URL.createObjectURL(file);
+        video.src = objectUrl;
+        video.muted = true;
+        video.onloadeddata = () => {
+          video.currentTime = 1; // Show first frame as thumbnail
+          URL.revokeObjectURL(objectUrl);
+        };
+        thumbnail.appendChild(video);
+        
+        // Add click handler for modal
+        thumbnail.addEventListener('click', () => openMediaModal(file, 'video'));
       } else {
-        const fileInfo = document.createElement('div');
-        fileInfo.className = 'file-info';
-        fileInfo.innerHTML = `
-          <strong>File:</strong> ${file.name}<br>
-          <strong>Type:</strong> ${file.type || 'Unknown'}<br>
-          <strong>Size:</strong> ${(file.size / 1024 / 1024).toFixed(2)} MB
-        `;
-        if (previewContent) previewContent.appendChild(fileInfo);
+        // Show file icon for other file types
+        const fileIcon = document.createElement('div');
+        fileIcon.className = 'file-icon';
+        
+        // Determine icon based on file type
+        if (fileType.startsWith('audio/')) {
+          fileIcon.textContent = '🎵';
+        } else if (fileType.includes('pdf')) {
+          fileIcon.textContent = '📄';
+        } else if (fileType.includes('zip') || fileType.includes('rar') || fileType.includes('7z')) {
+          fileIcon.textContent = '📦';
+        } else if (fileType.includes('doc') || fileType.includes('docx')) {
+          fileIcon.textContent = '📝';
+        } else if (fileType.includes('xls') || fileType.includes('xlsx')) {
+          fileIcon.textContent = '📊';
+        } else if (fileType.includes('ppt') || fileType.includes('pptx')) {
+          fileIcon.textContent = '📋';
+        } else {
+          fileIcon.textContent = '📁';
+        }
+        
+        thumbnail.appendChild(fileIcon);
       }
+      
+      container.appendChild(mediaInfo);
+      container.appendChild(thumbnail);
+      
+      if (previewContent) previewContent.appendChild(container);
+    }
+    
+    // Media modal functionality
+    function openMediaModal(file, type) {
+      const modal = document.getElementById('media-modal');
+      const modalContent = document.getElementById('media-modal-content');
+      const closeBtn = document.getElementById('media-modal-close');
+      
+      if (!modal || !modalContent) return;
+      
+      // Clear previous content
+      const existingMedia = modalContent.querySelector('img, video');
+      if (existingMedia) {
+        existingMedia.remove();
+      }
+      
+      // Create media element
+      let mediaElement;
+      const objectUrl = URL.createObjectURL(file);
+      
+      if (type === 'image') {
+        mediaElement = document.createElement('img');
+        mediaElement.src = objectUrl;
+        mediaElement.onload = () => URL.revokeObjectURL(objectUrl);
+      } else if (type === 'video') {
+        mediaElement = document.createElement('video');
+        mediaElement.src = objectUrl;
+        mediaElement.controls = true;
+        mediaElement.onloadeddata = () => URL.revokeObjectURL(objectUrl);
+      }
+      
+      if (mediaElement) {
+        modalContent.insertBefore(mediaElement, closeBtn);
+      }
+      
+      // Show modal
+      modal.classList.add('show');
+      
+      // Close modal handlers
+      const closeModal = () => {
+        modal.classList.remove('show');
+        setTimeout(() => {
+          if (mediaElement && mediaElement.src) {
+            URL.revokeObjectURL(mediaElement.src);
+          }
+        }, 300);
+      };
+      
+      closeBtn.onclick = closeModal;
+      
+      modal.onclick = (e) => {
+        if (e.target === modal) {
+          closeModal();
+        }
+      };
+      
+      // ESC key handler
+      const handleEsc = (e) => {
+        if (e.key === 'Escape') {
+          closeModal();
+          document.removeEventListener('keydown', handleEsc);
+        }
+      };
+      
+      document.addEventListener('keydown', handleEsc);
     }
   }
 
@@ -1005,6 +1118,8 @@ document.addEventListener('DOMContentLoaded', () => {
       
       if (data.success) {
         showToast('Favorite groups saved successfully!', 'success');
+        // Collapse the groups list after saving favorites
+        collapseGroupsList();
       } else {
         showToast(`Error: ${data.message}`, 'error');
       }
@@ -1037,12 +1152,13 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         });
         
-        // Auto-collapse the groups list after loading favorites
+        // Auto-collapse the groups list only when favorites exist
         collapseGroupsList();
         
         showToast(`تم تحميل ${data.groups.length} مجموعة مفضلة`, 'success');
       } else if (data.success && data.groups.length === 0) {
-        showToast('No favorite groups found', 'warning');
+        // Keep dropdown open when no favorites exist
+        showToast('No favorite groups found - dropdown remains open for selection', 'warning');
       } else {
         showToast(`Error: ${data.message}`, 'error');
       }
@@ -1085,10 +1201,13 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         });
         
-        // Auto-collapse the groups list after loading favorites
+        // Auto-collapse the groups list only when favorites exist
         collapseGroupsList();
         
         console.log(`Auto-loaded ${data.groups.length} favorite groups and collapsed list`);
+      } else {
+        // Keep dropdown open when no favorites exist
+        console.log('No favorite groups found - keeping dropdown open for user selection');
       }
     } catch (error) {
       console.log('No favorites file found or error loading favorites:', error.message);
