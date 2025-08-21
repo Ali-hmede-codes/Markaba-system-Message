@@ -478,19 +478,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const arrow = document.getElementById('groups-list-arrow');
     
     if (header && content && arrow) {
-      header.addEventListener('click', () => {
+      header.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        console.log('Groups toggle clicked');
         const isCollapsed = content.classList.contains('collapsed');
+        console.log('Current collapsed state:', isCollapsed);
         
         if (isCollapsed) {
           content.classList.remove('collapsed');
           arrow.textContent = '▼';
           arrow.style.transform = 'rotate(0deg)';
+          console.log('Expanded groups list');
         } else {
           content.classList.add('collapsed');
           arrow.textContent = '▶';
           arrow.style.transform = 'rotate(-90deg)';
+          console.log('Collapsed groups list');
         }
       });
+    } else {
+      console.log('Toggle elements not found:', { header: !!header, content: !!content, arrow: !!arrow });
     }
   }
 
@@ -1118,8 +1127,10 @@ document.addEventListener('DOMContentLoaded', () => {
       
       if (data.success) {
         showToast('Favorite groups saved successfully!', 'success');
-        // Collapse the groups list after saving favorites
-        collapseGroupsList();
+        // Collapse the groups list after saving favorites (with delay)
+        setTimeout(() => {
+          collapseGroupsList();
+        }, 500);
       } else {
         showToast(`Error: ${data.message}`, 'error');
       }
@@ -1152,8 +1163,10 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         });
         
-        // Auto-collapse the groups list only when favorites exist
-        collapseGroupsList();
+        // Auto-collapse the groups list only when favorites exist (with delay)
+        setTimeout(() => {
+          collapseGroupsList();
+        }, 500);
         
         showToast(`تم تحميل ${data.groups.length} مجموعة مفضلة`, 'success');
       } else if (data.success && data.groups.length === 0) {
@@ -1201,8 +1214,10 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         });
         
-        // Auto-collapse the groups list only when favorites exist
-        collapseGroupsList();
+        // Auto-collapse the groups list only when favorites exist (with delay)
+        setTimeout(() => {
+          collapseGroupsList();
+        }, 500);
         
         console.log(`Auto-loaded ${data.groups.length} favorite groups and collapsed list`);
       } else {

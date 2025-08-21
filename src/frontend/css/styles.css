@@ -335,6 +335,11 @@ button:disabled {
   overflow: hidden !important;
 }
 
+.groups-list-content.collapsed .groups-items {
+  padding: 0 !important;
+  max-height: 0 !important;
+}
+
 .groups-items {
   padding: 15px;
   max-height: 350px;
