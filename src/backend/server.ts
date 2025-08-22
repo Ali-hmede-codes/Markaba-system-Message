@@ -10,10 +10,13 @@ import whatsappRoutes from './routes/whatsapp';
 import telegramRoutes from './routes/telegram';
 import authRoutes from './routes/auth';
 import settingsRoutes from './routes/settings';
+import scheduledMessagesRoutes from './routes/scheduledMessages';
+import notificationsRoutes from './routes/notifications';
 import whatsappService from './services/whatsappService';
 import telegramService from './services/telegramService';
 import databaseService from './services/databaseService';
 import authService from './services/authService';
+import schedulingService from './services/schedulingService';
 import { checkAuth, optionalAuth } from './middleware/auth';
 
 const app: Express = express();
@@ -57,11 +60,13 @@ app.get('/api/health', async (req: Request, res: Response) => {
   });
 });
 
-// API routes
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/telegram', telegramRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/scheduled-messages', checkAuth, scheduledMessagesRoutes);
+app.use('/api/notifications', checkAuth, notificationsRoutes);
 
 // Serve login page
 app.get('/login', (req: Request, res: Response) => {
@@ -130,6 +135,14 @@ async function initializeServices() {
     console.log('Telegram service initialized successfully');
   } catch (telegramError) {
     console.error('Telegram initialization failed:', telegramError instanceof Error ? telegramError.message : 'Unknown error');
+  }
+  
+  // Initialize scheduling service
+  try {
+    schedulingService.initialize();
+    console.log('Scheduling service initialized successfully');
+  } catch (schedulingError) {
+    console.error('Scheduling service initialization failed:', schedulingError instanceof Error ? schedulingError.message : 'Unknown error');
   }
   
   console.log('Service initialization completed');

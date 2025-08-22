@@ -987,6 +987,158 @@ body.admin-page .form-control:hover {
     color: #17a2b8;
 }
 
+/* Notification System */
+.notification-container {
+  position: relative;
+  display: inline-block;
+  margin-right: 15px;
+}
+
+.notification-btn {
+  position: relative;
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 10px;
+  border-radius: 50%;
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.notification-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #ff4757;
+  color: white;
+  border-radius: 50%;
+  min-width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  animation: pulse 2s infinite;
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  width: 350px;
+  max-height: 400px;
+  overflow: hidden;
+  z-index: 1000;
+  display: none;
+  margin-top: 10px;
+}
+
+.notification-dropdown.show {
+  display: block;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.notification-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8f9fa;
+}
+
+.notification-header h4 {
+  margin: 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.notification-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.notification-item {
+  padding: 15px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.notification-item:hover {
+  background: #f8f9fa;
+}
+
+.notification-item.unread {
+  background: #e3f2fd;
+  border-left: 4px solid #2196f3;
+}
+
+.notification-item.unread:hover {
+  background: #bbdefb;
+}
+
+.notification-title {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+
+.notification-message {
+  color: #666;
+  font-size: 13px;
+  line-height: 1.4;
+  margin-bottom: 5px;
+}
+
+.notification-time {
+  color: #999;
+  font-size: 11px;
+}
+
+.notification-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.notification-actions .btn {
+  padding: 5px 10px;
+  font-size: 11px;
+}
+
+.no-notifications {
+  padding: 30px 20px;
+  text-align: center;
+  color: #999;
+  font-style: italic;
+}
+
 /* Comprehensive Responsive Design */
 @media (max-width: 1024px) {
     body.admin-page .admin-sidebar {
@@ -1462,6 +1614,182 @@ body.admin-page .form-control:hover {
     gap: 20px;
     max-width: 600px;
     margin: 20px auto;
+}
+
+/* Scheduled Messages Styles */
+.scheduled-messages-container {
+    padding: var(--space-4);
+}
+
+.scheduled-messages-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.scheduled-message-card {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease;
+}
+
+.scheduled-message-card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary-300);
+}
+
+.scheduled-message-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--space-4);
+}
+
+.scheduled-message-content {
+    background: var(--background-secondary);
+    padding: var(--space-4);
+    border-radius: var(--radius-md);
+    border-right: 4px solid var(--primary-500);
+    margin-bottom: var(--space-4);
+    font-family: var(--font-family-arabic);
+    line-height: 1.6;
+    color: var(--text-primary);
+}
+
+.scheduled-message-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+}
+
+.scheduled-message-info-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+.scheduled-message-info-item i {
+    color: var(--primary-500);
+    width: 16px;
+}
+
+.scheduled-message-times {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+}
+
+.scheduled-time-badge {
+    background: var(--primary-100);
+    color: var(--primary-700);
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    border: 1px solid var(--primary-200);
+}
+
+.scheduled-message-status {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+}
+
+.scheduled-message-status.active {
+    background: var(--success-100);
+    color: var(--success-700);
+    border: 1px solid var(--success-300);
+}
+
+.scheduled-message-status.paused {
+    background: var(--warning-100);
+    color: var(--warning-700);
+    border: 1px solid var(--warning-300);
+}
+
+.scheduled-message-status.inactive {
+    background: var(--error-100);
+    color: var(--error-700);
+    border: 1px solid var(--error-300);
+}
+
+.scheduled-message-actions {
+    display: flex;
+    gap: var(--space-2);
+}
+
+.scheduled-message-actions .btn {
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--font-size-sm);
+}
+
+/* Scheduled Message Modal Styles */
+.scheduled-times-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+}
+
+.scheduled-time-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    background: var(--background-secondary);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-light);
+}
+
+.scheduled-time-item input[type="time"] {
+    flex: 1;
+    padding: var(--space-2);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    color: var(--text-primary);
+    font-family: inherit;
+}
+
+.scheduled-time-item .remove-time {
+    padding: var(--space-1) var(--space-2);
+    min-width: auto;
+}
+
+/* Dark mode adjustments for scheduled messages */
+:root[data-theme="dark"] .scheduled-time-badge {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--primary-300);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+:root[data-theme="dark"] .scheduled-message-status.active {
+    background: rgba(34, 197, 94, 0.1);
+    color: var(--success-300);
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+:root[data-theme="dark"] .scheduled-message-status.paused {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--warning-300);
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+:root[data-theme="dark"] .scheduled-message-status.inactive {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--error-300);
+    border-color: rgba(239, 68, 68, 0.3);
 }
 
 .setting-item {

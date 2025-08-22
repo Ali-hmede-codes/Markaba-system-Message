@@ -1,7 +1,7 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { EventEmitter } from 'events';
-import TelegramBot from 'node-telegram-bot-api';
+const TelegramBot = require('node-telegram-bot-api');
 
 interface TelegramConfig {
   botToken: string;
@@ -11,7 +11,7 @@ interface TelegramConfig {
 
 class TelegramService extends EventEmitter {
   private config: TelegramConfig;
-  private bot: TelegramBot | null = null;
+  private bot: any = null;
   private isConnected: boolean = false;
 
   constructor() {

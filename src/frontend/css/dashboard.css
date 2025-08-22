@@ -395,6 +395,29 @@ body {
   cursor: not-allowed;
 }
 
+/* Locked button styles for scheduled messages */
+.btn.locked {
+  background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+  border-color: #ff6b6b;
+  color: white;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+.btn.locked:hover {
+  background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+  transform: none;
+}
+
+.btn.locked .btn-icon {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
 .btn-primary {
   background: var(--gradient-primary);
   color: var(--text-on-primary);

@@ -886,6 +886,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     try {
+      // Check if message sending is locked by scheduled messages
+      const lockResponse = await fetch('/api/scheduled-messages/lock-status');
+      if (lockResponse.ok) {
+        const lockData = await lockResponse.json();
+        if (lockData.isLocked) {
+          const lockedUntil = lockData.lockedUntil ? new Date(lockData.lockedUntil).toLocaleTimeString() : 'unknown';
+          showSendStatus(`Message sending is temporarily locked. ${lockData.reason || 'Scheduled message is being prepared.'} Unlocks at: ${lockedUntil}`, 'warning');
+          return;
+        }
+      }
+      
       // Get message details for fingerprinting
       const message = messageInput.value.trim();
       const selectedGroups = Array.from(document.querySelectorAll('#groups-list input[type="checkbox"]:checked'))
@@ -1518,6 +1529,52 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Check message lock status and update UI
+  async function checkMessageLockStatus() {
+    try {
+      const response = await fetch('/api/scheduled-messages/lock-status');
+      if (response.ok) {
+        const lockData = await response.json();
+        updateSendButtonLockStatus(lockData);
+      }
+    } catch (error) {
+      console.error('Error checking lock status:', error);
+    }
+  }
+
+  // Update send button based on lock status
+  function updateSendButtonLockStatus(lockData) {
+    if (!sendBtn) return;
+    
+    if (lockData.isLocked) {
+      sendBtn.disabled = true;
+      sendBtn.classList.add('locked');
+      const lockedUntil = lockData.lockedUntil ? new Date(lockData.lockedUntil).toLocaleTimeString() : 'unknown';
+      sendBtn.innerHTML = `
+        <span class="btn-icon">🔒</span>
+        Locked until ${lockedUntil}
+      `;
+      sendBtn.title = lockData.reason || 'Message sending is temporarily locked';
+    } else {
+      sendBtn.disabled = false;
+      sendBtn.classList.remove('locked');
+      sendBtn.innerHTML = `
+        <span class="btn-icon">📤</span>
+        إرسال للمجموعات المحددة
+      `;
+      sendBtn.title = '';
+    }
+  }
+
+  // Start periodic lock status checking
+  function startLockStatusMonitoring() {
+    // Check immediately
+    checkMessageLockStatus();
+    
+    // Check every 10 seconds
+    setInterval(checkMessageLockStatus, 10000);
+  }
+
   async function loadLinkPreviewStatus() {
     try {
       const response = await fetch(`${API_BASE_URL}/link-preview/status`, {
@@ -1534,5 +1591,8 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Error loading link preview status:', error);
     }
   }
+
+  // Initialize lock status monitoring
+  startLockStatusMonitoring();
 
 });

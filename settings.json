@@ -1,7 +1,8 @@
 {
-  "sendToTelegram": false,
+  "sendToTelegram": true,
   "sendToWhatsApp": true,
-  "telegramSettings": false,
+  "telegramSettings": true,
+  "scheduleMessages": true,
   "batchSize": 10,
   "telegramConfig": {
     "botToken": "8278027059:AAGEH3PPqRNk-LPUPtV5wAUwdu4FXCXhR20",

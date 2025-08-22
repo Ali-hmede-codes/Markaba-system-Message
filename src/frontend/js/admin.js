@@ -891,4 +891,499 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+    
+    // Initialize scheduled messages functionality
+    initScheduledMessages();
+    
+    // Initialize notifications functionality
+    initNotifications();
 });
+
+// Scheduled Messages Functionality
+function initScheduledMessages() {
+    const addScheduledMessageBtn = document.getElementById('add-scheduled-message');
+    const scheduledMessageModal = document.getElementById('scheduled-message-modal');
+    const scheduledMessageForm = document.getElementById('scheduled-message-form');
+    const addTimeSlotBtn = document.getElementById('add-time-slot');
+    const timesPerDayInput = document.getElementById('scheduled-message-times-per-day');
+    
+    if (!addScheduledMessageBtn) return;
+    
+    // Load scheduled messages when tab is opened
+    document.querySelector('[data-tab="scheduled-messages"]').addEventListener('click', loadScheduledMessages);
+    
+    // Add new scheduled message
+    addScheduledMessageBtn.addEventListener('click', () => {
+        openScheduledMessageModal();
+    });
+    
+    // Handle times per day change
+    timesPerDayInput.addEventListener('change', updateTimeSlots);
+    
+    // Add time slot
+    addTimeSlotBtn.addEventListener('click', addTimeSlot);
+    
+    // Form submission
+    scheduledMessageForm.addEventListener('submit', handleScheduledMessageSubmit);
+    
+    // Modal close
+    scheduledMessageModal.querySelector('.close').addEventListener('click', closeScheduledMessageModal);
+    
+    // Close modal when clicking outside
+    scheduledMessageModal.addEventListener('click', (e) => {
+        if (e.target === scheduledMessageModal) {
+            closeScheduledMessageModal();
+        }
+    });
+}
+
+async function loadScheduledMessages() {
+    try {
+        const response = await fetch('/api/scheduled-messages');
+        const data = await response.json();
+        
+        if (data.success) {
+            displayScheduledMessages(data.messages);
+        } else {
+            showMessage('خطأ في تحميل الرسائل المجدولة', 'error');
+        }
+    } catch (error) {
+        console.error('Error loading scheduled messages:', error);
+        showMessage('خطأ في الاتصال بالخادم', 'error');
+    }
+}
+
+function displayScheduledMessages(messages) {
+    const container = document.getElementById('scheduled-messages-list');
+    
+    if (messages.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-clock" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 1rem;"></i>
+                <h3>لا توجد رسائل مجدولة</h3>
+                <p>اضغط على "إضافة رسالة مجدولة" لإنشاء رسالة جديدة</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = messages.map(message => `
+        <div class="scheduled-message-card" data-id="${message.id}">
+            <div class="scheduled-message-header">
+                <span class="scheduled-message-status ${message.status}">
+                    <i class="fas fa-${getStatusIcon(message.status)}"></i>
+                    ${getStatusText(message.status)}
+                </span>
+                <div class="scheduled-message-actions">
+                    <button class="btn btn-secondary btn-sm" onclick="editScheduledMessage(${message.id})">
+                        <i class="fas fa-edit"></i> تعديل
+                    </button>
+                    <button class="btn btn-${message.status === 'active' ? 'warning' : 'success'} btn-sm" onclick="toggleScheduledMessage(${message.id})">
+                        <i class="fas fa-${message.status === 'active' ? 'pause' : 'play'}"></i>
+                        ${message.status === 'active' ? 'إيقاف مؤقت' : 'تفعيل'}
+                    </button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteScheduledMessage(${message.id})">
+                        <i class="fas fa-trash"></i> حذف
+                    </button>
+                </div>
+            </div>
+            
+            <div class="scheduled-message-content">
+                ${message.content}
+            </div>
+            
+            <div class="scheduled-message-info">
+                <div class="scheduled-message-info-item">
+                    <i class="fas fa-calendar"></i>
+                    <span>تاريخ البداية: ${new Date(message.startDate).toLocaleDateString('ar-SA')}</span>
+                </div>
+                <div class="scheduled-message-info-item">
+                    <i class="fas fa-repeat"></i>
+                    <span>عدد المرات: ${message.timesPerDay} مرة يومياً</span>
+                </div>
+                <div class="scheduled-message-info-item">
+                    <i class="fas fa-clock"></i>
+                    <span>الأوقات:</span>
+                    <div class="scheduled-message-times">
+                        ${message.scheduledTimes.map(time => `<span class="scheduled-time-badge">${time}</span>`).join('')}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function getStatusIcon(status) {
+    switch (status) {
+        case 'active': return 'play-circle';
+        case 'paused': return 'pause-circle';
+        case 'inactive': return 'stop-circle';
+        default: return 'question-circle';
+    }
+}
+
+function getStatusText(status) {
+    switch (status) {
+        case 'active': return 'نشط';
+        case 'paused': return 'متوقف مؤقتاً';
+        case 'inactive': return 'غير نشط';
+        default: return 'غير معروف';
+    }
+}
+
+function openScheduledMessageModal(messageId = null) {
+    const modal = document.getElementById('scheduled-message-modal');
+    const form = document.getElementById('scheduled-message-form');
+    const title = document.getElementById('scheduled-message-modal-title');
+    
+    // Reset form
+    form.reset();
+    document.getElementById('scheduled-message-id').value = messageId || '';
+    
+    // Set modal title
+    title.textContent = messageId ? 'تعديل رسالة مجدولة' : 'إضافة رسالة مجدولة';
+    
+    // Set default date to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('scheduled-message-start-date').value = today;
+    
+    // Reset time slots
+    updateTimeSlots();
+    
+    // Load message data if editing
+    if (messageId) {
+        loadScheduledMessageData(messageId);
+    }
+    
+    modal.style.display = 'block';
+}
+
+function closeScheduledMessageModal() {
+    const modal = document.getElementById('scheduled-message-modal');
+    modal.style.display = 'none';
+}
+
+async function loadScheduledMessageData(messageId) {
+    try {
+        const response = await fetch(`/api/scheduled-messages/${messageId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            const message = data.message;
+            document.getElementById('scheduled-message-content').value = message.content;
+            document.getElementById('scheduled-message-times-per-day').value = message.timesPerDay;
+            document.getElementById('scheduled-message-start-date').value = message.startDate.split('T')[0];
+            document.getElementById('scheduled-message-status').value = message.status;
+            
+            // Update time slots
+            updateTimeSlots();
+            
+            // Set time values
+            const timeInputs = document.querySelectorAll('input[name="scheduledTimes"]');
+            message.scheduledTimes.forEach((time, index) => {
+                if (timeInputs[index]) {
+                    timeInputs[index].value = time;
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error loading scheduled message:', error);
+        showMessage('خطأ في تحميل بيانات الرسالة', 'error');
+    }
+}
+
+function updateTimeSlots() {
+    const timesPerDay = parseInt(document.getElementById('scheduled-message-times-per-day').value) || 1;
+    const container = document.getElementById('scheduled-times-container');
+    const currentSlots = container.querySelectorAll('.scheduled-time-item').length;
+    
+    // Add or remove time slots as needed
+    if (timesPerDay > currentSlots) {
+        for (let i = currentSlots; i < timesPerDay; i++) {
+            addTimeSlot();
+        }
+    } else if (timesPerDay < currentSlots) {
+        const slotsToRemove = currentSlots - timesPerDay;
+        const slots = container.querySelectorAll('.scheduled-time-item');
+        for (let i = 0; i < slotsToRemove; i++) {
+            const lastSlot = slots[slots.length - 1 - i];
+            if (lastSlot) {
+                lastSlot.remove();
+            }
+        }
+    }
+    
+    // Update remove button visibility
+    updateRemoveButtonsVisibility();
+}
+
+function addTimeSlot() {
+    const container = document.getElementById('scheduled-times-container');
+    const timeSlot = document.createElement('div');
+    timeSlot.className = 'scheduled-time-item';
+    timeSlot.innerHTML = `
+        <input type="time" name="scheduledTimes" required>
+        <button type="button" class="btn btn-danger btn-sm remove-time">
+            <i class="fas fa-trash"></i>
+        </button>
+    `;
+    
+    // Add remove event listener
+    timeSlot.querySelector('.remove-time').addEventListener('click', () => {
+        timeSlot.remove();
+        // Update times per day input
+        const currentCount = container.querySelectorAll('.scheduled-time-item').length;
+        document.getElementById('scheduled-message-times-per-day').value = currentCount;
+        updateRemoveButtonsVisibility();
+    });
+    
+    container.appendChild(timeSlot);
+    updateRemoveButtonsVisibility();
+}
+
+function updateRemoveButtonsVisibility() {
+    const container = document.getElementById('scheduled-times-container');
+    const removeButtons = container.querySelectorAll('.remove-time');
+    const shouldShow = removeButtons.length > 1;
+    
+    removeButtons.forEach(btn => {
+        btn.style.display = shouldShow ? 'block' : 'none';
+    });
+}
+
+async function handleScheduledMessageSubmit(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const messageId = document.getElementById('scheduled-message-id').value;
+    
+    // Collect scheduled times
+    const timeInputs = document.querySelectorAll('input[name="scheduledTimes"]');
+    const scheduledTimes = Array.from(timeInputs).map(input => input.value).filter(time => time);
+    
+    const messageData = {
+        content: formData.get('content'),
+        timesPerDay: parseInt(formData.get('timesPerDay')),
+        startDate: formData.get('startDate'),
+        status: formData.get('status'),
+        scheduledTimes: scheduledTimes
+    };
+    
+    try {
+        const url = messageId ? `/api/scheduled-messages/${messageId}` : '/api/scheduled-messages';
+        const method = messageId ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(messageData)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showMessage(messageId ? 'تم تحديث الرسالة المجدولة بنجاح' : 'تم إضافة الرسالة المجدولة بنجاح', 'success');
+            closeScheduledMessageModal();
+            loadScheduledMessages();
+        } else {
+            showMessage(data.message || 'خطأ في حفظ الرسالة المجدولة', 'error');
+        }
+    } catch (error) {
+        console.error('Error saving scheduled message:', error);
+        showMessage('خطأ في الاتصال بالخادم', 'error');
+    }
+}
+
+async function editScheduledMessage(messageId) {
+    openScheduledMessageModal(messageId);
+}
+
+async function toggleScheduledMessage(messageId) {
+    try {
+        const response = await fetch(`/api/scheduled-messages/${messageId}/toggle`, {
+            method: 'PATCH'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showMessage('تم تغيير حالة الرسالة المجدولة بنجاح', 'success');
+            loadScheduledMessages();
+        } else {
+            showMessage(data.message || 'خطأ في تغيير حالة الرسالة', 'error');
+        }
+    } catch (error) {
+        console.error('Error toggling scheduled message:', error);
+        showMessage('خطأ في الاتصال بالخادم', 'error');
+    }
+}
+
+async function deleteScheduledMessage(messageId) {
+    if (!confirm('هل أنت متأكد من حذف هذه الرسالة المجدولة؟')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/scheduled-messages/${messageId}`, {
+            method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showMessage('تم حذف الرسالة المجدولة بنجاح', 'success');
+            loadScheduledMessages();
+        } else {
+            showMessage(data.message || 'خطأ في حذف الرسالة', 'error');
+        }
+    } catch (error) {
+        console.error('Error deleting scheduled message:', error);
+        showMessage('خطأ في الاتصال بالخادم', 'error');
+    }
+}
+
+// Notification System
+let notificationDropdownOpen = false;
+let notificationCheckInterval;
+
+function initNotifications() {
+    // Start checking for notifications every 30 seconds
+    loadNotifications();
+    notificationCheckInterval = setInterval(loadNotifications, 30000);
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        const notificationContainer = document.querySelector('.notification-container');
+        if (!notificationContainer.contains(event.target)) {
+            closeNotificationDropdown();
+        }
+    });
+}
+
+async function loadNotifications() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/notifications`, {
+            credentials: 'include'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            displayNotifications(data.notifications);
+            updateNotificationBadge(data.notifications);
+        }
+    } catch (error) {
+        console.error('Error loading notifications:', error);
+    }
+}
+
+function displayNotifications(notifications) {
+    const notificationList = document.getElementById('notificationList');
+    
+    if (notifications.length === 0) {
+        notificationList.innerHTML = '<div class="no-notifications">No notifications</div>';
+        return;
+    }
+    
+    notificationList.innerHTML = notifications.map(notification => {
+        const timeAgo = getTimeAgo(notification.timestamp);
+        const unreadClass = notification.read ? '' : 'unread';
+        
+        return `
+            <div class="notification-item ${unreadClass}" onclick="markNotificationRead('${notification.id}')">
+                <div class="notification-title">${notification.title}</div>
+                <div class="notification-message">${notification.message}</div>
+                <div class="notification-time">${timeAgo}</div>
+                ${!notification.read ? '<div class="notification-actions"><button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); markNotificationRead(\''+notification.id+'\');">Mark as Read</button></div>' : ''}
+            </div>
+        `;
+    }).join('');
+}
+
+function updateNotificationBadge(notifications) {
+    const badge = document.getElementById('notificationBadge');
+    const unreadCount = notifications.filter(n => !n.read).length;
+    
+    if (unreadCount > 0) {
+        badge.textContent = unreadCount;
+        badge.style.display = 'flex';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+function toggleNotifications() {
+    const dropdown = document.getElementById('notificationDropdown');
+    
+    if (notificationDropdownOpen) {
+        closeNotificationDropdown();
+    } else {
+        dropdown.classList.add('show');
+        notificationDropdownOpen = true;
+        loadNotifications(); // Refresh notifications when opened
+    }
+}
+
+function closeNotificationDropdown() {
+    const dropdown = document.getElementById('notificationDropdown');
+    dropdown.classList.remove('show');
+    notificationDropdownOpen = false;
+}
+
+async function markNotificationRead(notificationId) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/notifications/${notificationId}/read`, {
+            method: 'PATCH',
+            credentials: 'include'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            loadNotifications(); // Refresh notifications
+        }
+    } catch (error) {
+        console.error('Error marking notification as read:', error);
+    }
+}
+
+async function markAllNotificationsRead() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/notifications/mark-all-read`, {
+            method: 'PATCH',
+            credentials: 'include'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            loadNotifications(); // Refresh notifications
+            showMessage('All notifications marked as read', 'success');
+        }
+    } catch (error) {
+        console.error('Error marking all notifications as read:', error);
+        showMessage('Error marking notifications as read', 'error');
+    }
+}
+
+function getTimeAgo(timestamp) {
+    const now = Date.now();
+    const diff = now - timestamp;
+    
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    
+    if (days > 0) {
+        return `${days} day${days > 1 ? 's' : ''} ago`;
+    } else if (hours > 0) {
+        return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    } else if (minutes > 0) {
+        return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    } else {
+        return 'Just now';
+    }
+}
