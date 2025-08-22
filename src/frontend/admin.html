@@ -6,7 +6,7 @@
     <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
     <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
     <meta name="bingbot" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
-    <title>Admin Panel - WhatsApp Message Send System</title>
+    <title>الإدارة - CHATRIX</title>
     <link rel="icon" type="image/png" href="assets/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
     <link rel="shortcut icon" href="assets/favicon.ico" />
@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="css/colors.css">
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="admin-page">
     <div class="admin-container">
@@ -25,9 +26,16 @@
                 <span></span>
                 <span></span>
             </button>
-            <h1>Admin Panel</h1>
+            <div class="admin-brand">
+                <img id="admin-brand-logo" class="admin-brand-logo" src="assets/logo.png" alt="Logo" style="display: none;">
+                <div class="admin-brand-icon" id="admin-brand-icon">📱</div>
+                <h1 id="admin-brand-title">الإدارة - CHATRIX</h1>
+            </div>
             <div class="admin-nav">
-                <button id="back-to-main" class="nav-btn">Back to Main</button>
+                <button id="back-to-main" class="nav-btn back-to-main-btn">
+                    <i class="fas fa-arrow-right"></i>
+                    <span>Back to Main</span>
+                </button>
                 <button id="logout-btn" class="nav-btn logout">Logout</button>
             </div>
         </div>
@@ -342,6 +350,51 @@
 
     <div id="admin-message" class="message" style="display: none;"></div>
 
+    <script>
+        // Load global configuration
+        async function loadGlobalConfig() {
+            try {
+                const response = await fetch('config/global.json');
+                const config = await response.json();
+                
+                // Update page title
+                document.title = `${config.adminTitle || 'الإدارة'} - ${config.systemName}`;
+                
+                // Update brand elements
+                const brandTitle = document.getElementById('admin-brand-title');
+                const brandIcon = document.getElementById('admin-brand-icon');
+                const brandLogo = document.getElementById('admin-brand-logo');
+                
+                if (brandTitle) {
+                    brandTitle.textContent = `${config.adminTitle || 'الإدارة'} - ${config.systemName}`;
+                }
+                
+                // Show logo if available, hide icon
+                if (config.logo && config.logo.src && brandLogo) {
+                    brandLogo.src = config.logo.src;
+                    brandLogo.alt = config.logo.alt || config.systemName;
+                    brandLogo.style.display = 'block';
+                    if (brandIcon) brandIcon.style.display = 'none';
+                }
+                
+                // Apply branding colors if available
+                if (config.branding) {
+                    const root = document.documentElement;
+                    if (config.branding.primaryColor) {
+                        root.style.setProperty('--primary-600', config.branding.primaryColor);
+                    }
+                    if (config.branding.secondaryColor) {
+                        root.style.setProperty('--primary-700', config.branding.secondaryColor);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading global config:', error);
+            }
+        }
+        
+        // Load config when page loads
+        document.addEventListener('DOMContentLoaded', loadGlobalConfig);
+    </script>
     <script src="js/admin.js"></script>
 </body>
 </html>

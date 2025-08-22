@@ -380,7 +380,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const userId = document.getElementById('edit-user-id').value;
         
         const userData = {
-            id: parseInt(userId),
             username: formData.get('username'),
             email: formData.get('email'),
             full_name: formData.get('full_name'),
@@ -388,8 +387,8 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         
         try {
-            const response = await fetch(`${API_BASE_URL}/users/update`, {
-                method: 'POST',
+            const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'
                 },

@@ -51,6 +51,37 @@ body.admin-page .admin-header {
     border-radius: 0 !important;
 }
 
+.admin-brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.admin-brand-logo {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+}
+
+.admin-brand-icon {
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: var(--primary-100);
+    border-radius: var(--radius-md);
+    color: var(--primary-600);
+}
+
+.admin-brand h1 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
 body.admin-page .admin-header h1 {
     margin: 0 !important;
     font-size: var(--font-size-3xl) !important;
@@ -86,6 +117,39 @@ body.admin-page .nav-btn:hover {
     border-color: rgba(255, 255, 255, 0.4) !important;
     transform: translateY(-1px) !important;
     box-shadow: var(--shadow-md) !important;
+}
+
+.back-to-main-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    background: var(--surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-sm);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    transition: var(--transition-normal);
+}
+
+.back-to-main-btn:hover {
+    background: var(--surface-variant);
+    border-color: var(--primary-300);
+    color: var(--primary-600);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+.back-to-main-btn i {
+    font-size: 0.875rem;
+    transition: transform 0.2s ease;
+}
+
+.back-to-main-btn:hover i {
+    transform: translateX(2px);
 }
 
 body.admin-page .nav-btn.logout {
@@ -1107,6 +1171,35 @@ body.admin-page .form-control:hover {
     
     .admin-header h1 {
         font-size: var(--font-size-xl);
+    }
+    
+    body.admin-page .admin-brand {
+        gap: var(--space-2) !important;
+    }
+    
+    body.admin-page .admin-brand h1 {
+        font-size: 0.875rem !important;
+    }
+    
+    body.admin-page .admin-brand-logo,
+    body.admin-page .admin-brand-icon {
+        width: 24px !important;
+        height: 24px !important;
+        font-size: 1rem !important;
+    }
+    
+    body.admin-page .back-to-main-btn {
+        padding: var(--space-2) var(--space-3) !important;
+        font-size: 0.75rem !important;
+        gap: var(--space-1) !important;
+    }
+    
+    body.admin-page .back-to-main-btn span {
+        display: none !important;
+    }
+    
+    body.admin-page .back-to-main-btn i {
+        font-size: 1rem !important;
     }
     
     .admin-main {
