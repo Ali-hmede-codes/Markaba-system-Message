@@ -1,6 +1,6 @@
 {
-  "sendToTelegram": false,
+  "sendToTelegram": true,
   "sendToWhatsApp": true,
   "telegramSettings": false,
-  "batchSize": 10
+  "batchSize": 5
 }
