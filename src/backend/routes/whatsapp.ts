@@ -140,12 +140,29 @@ router.post('/init', async (req: Request, res: Response) => {
 
 // Get status
 router.get('/status', (req: Request, res: Response) => {
-  const state = whatsappService.getState();
-  res.json({
-    connected: state === 'READY',
-    qrCode: whatsappService.getQR(),
-    state: state
-  });
+  try {
+    const state = whatsappService.getState();
+    const isConnected = state === 'READY';
+    const isAuthenticated = state === 'READY' || state === 'AUTHENTICATED';
+    
+    res.json({
+      success: true,
+      connected: isConnected,
+      isConnected: isConnected,
+      isAuthenticated: isAuthenticated,
+      qrCode: whatsappService.getQR(),
+      state: state
+    });
+  } catch (error) {
+    console.error('Error getting WhatsApp status:', error);
+    res.status(500).json({
+      success: false,
+      connected: false,
+      isConnected: false,
+      isAuthenticated: false,
+      error: (error as Error).message
+    });
+  }
 });
 
 // Get QR code
