@@ -616,7 +616,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             const btn = document.getElementById('admin-whatsapp-logout');
             btn.disabled = false;
-            btn.innerHTML = '<span class="btn-icon">🚪</span> Logout from WhatsApp';
+            btn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Logout from WhatsApp';
         }
     }
     
@@ -648,7 +648,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             const btn = document.getElementById('admin-force-reconnect');
             btn.disabled = false;
-            btn.innerHTML = '<span class="btn-icon">🔄</span> Force Reconnect';
+            btn.innerHTML = '<i class="fas fa-redo-alt"></i> Force Reconnect';
         }
     }
     
@@ -680,7 +680,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             const btn = document.getElementById('admin-clear-auth');
             btn.disabled = false;
-            btn.innerHTML = '<span class="btn-icon">🗑️</span> Clear Authentication Data';
+            btn.innerHTML = '<i class="fas fa-trash-alt"></i> Clear Authentication Data';
         }
     }
     
@@ -694,20 +694,26 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (statusElement) {
                 if (data.success) {
-                    statusElement.textContent = data.isConnected ? 'Connected' : 'Disconnected';
-                    statusElement.className = `status-value ${data.isConnected ? '' : 'disconnected'}`;
+                    const isConnected = data.connected || data.isConnected;
+                    statusElement.innerHTML = isConnected ? 
+                        '<i class="fas fa-check-circle"></i> متصل' : 
+                        '<i class="fas fa-times-circle"></i> غير متصل';
+                    statusElement.className = `status-value ${isConnected ? 'connected' : 'disconnected'}`;
                 } else {
-                    statusElement.textContent = 'Error';
+                    statusElement.innerHTML = '<i class="fas fa-exclamation-triangle"></i> خطأ في الاتصال';
                     statusElement.className = 'status-value disconnected';
                 }
             }
             
             if (authElement) {
                 if (data.success) {
-                    authElement.textContent = data.isAuthenticated ? 'Authenticated' : 'Not Authenticated';
-                    authElement.className = `status-value ${data.isAuthenticated ? '' : 'disconnected'}`;
+                    const isAuthenticated = data.isAuthenticated || (data.state === 'READY');
+                    authElement.innerHTML = isAuthenticated ? 
+                        '<i class="fas fa-shield-alt"></i> مصادق عليه' : 
+                        '<i class="fas fa-shield-alt"></i> غير مصادق';
+                    authElement.className = `status-value ${isAuthenticated ? 'connected' : 'disconnected'}`;
                 } else {
-                    authElement.textContent = 'Error';
+                    authElement.innerHTML = '<i class="fas fa-exclamation-triangle"></i> خطأ في المصادقة';
                     authElement.className = 'status-value disconnected';
                 }
             }
@@ -717,11 +723,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const authElement = document.getElementById('admin-auth-status');
             
             if (statusElement) {
-                statusElement.textContent = 'Error';
+                statusElement.innerHTML = '<i class="fas fa-exclamation-triangle"></i> خطأ في الشبكة';
                 statusElement.className = 'status-value disconnected';
             }
             if (authElement) {
-                authElement.textContent = 'Error';
+                authElement.innerHTML = '<i class="fas fa-exclamation-triangle"></i> خطأ في الشبكة';
                 authElement.className = 'status-value disconnected';
             }
         }

@@ -183,6 +183,7 @@
     --border-strong: var(--neutral-500);
     
     --gradient-surface: linear-gradient(135deg, var(--neutral-800) 0%, var(--neutral-700) 100%);
+    --gradient-primary: linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #2d2d2d 100%);
   }
 }
 

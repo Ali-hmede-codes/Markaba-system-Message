@@ -1199,9 +1199,26 @@ body.admin-page .form-control:hover {
     }
     
     body.admin-page .back-to-main-btn {
-        padding: var(--space-2) var(--space-3) !important;
+        padding: var(--space-3) !important;
         font-size: 0.75rem !important;
-        gap: var(--space-1) !important;
+        gap: 0 !important;
+        min-width: 44px !important;
+        width: 44px !important;
+        height: 44px !important;
+        border-radius: var(--radius-lg) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: var(--surface) !important;
+        border: 2px solid var(--border-medium) !important;
+        box-shadow: var(--shadow-md) !important;
+    }
+    
+    body.admin-page .back-to-main-btn:hover {
+        background: var(--primary-50) !important;
+        border-color: var(--primary-300) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: var(--shadow-lg) !important;
     }
     
     body.admin-page .back-to-main-btn span {
@@ -1209,7 +1226,14 @@ body.admin-page .form-control:hover {
     }
     
     body.admin-page .back-to-main-btn i {
-        font-size: 1rem !important;
+        font-size: 1.25rem !important;
+        color: var(--primary-600) !important;
+        margin: 0 !important;
+    }
+    
+    body.admin-page .back-to-main-btn:hover i {
+        color: var(--primary-700) !important;
+        transform: translateX(2px) !important;
     }
     
     .admin-main {
@@ -1259,12 +1283,20 @@ body.admin-page .form-control:hover {
 }
 
 .control-section h3 {
-    margin: 0 0 20px 0;
-    color: #333;
-    font-size: 18px;
-    font-weight: 600;
-    border-bottom: 2px solid #f0f0f0;
-    padding-bottom: 10px;
+    margin-bottom: var(--space-5);
+    color: var(--text-primary);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    border-bottom: 2px solid var(--primary-500);
+    padding-bottom: var(--space-2);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.control-section h3 i {
+    color: var(--primary-500);
+    font-size: 1.1em;
 }
 
 .control-buttons {
@@ -1323,34 +1355,60 @@ body.admin-page .form-control:hover {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 16px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    border-left: 4px solid #007bff;
+    padding: var(--space-4);
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    border-right: 4px solid var(--primary-500);
+    margin-bottom: var(--space-3);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease;
+}
+
+.status-item:hover {
+    background: var(--surface-hover);
+    box-shadow: var(--shadow-md);
 }
 
 .status-label {
-    font-weight: 600;
-    color: #495057;
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
 }
 
 .status-value {
-    font-weight: 500;
-    color: #28a745;
-    padding: 4px 12px;
-    background: rgba(40, 167, 69, 0.1);
-    border-radius: 20px;
-    font-size: 13px;
+    font-weight: var(--font-weight-medium);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    transition: all 0.2s ease;
+}
+
+.status-value.connected {
+    color: var(--success-600);
+    background: var(--success-50);
+    border: 1px solid var(--success-200);
 }
 
 .status-value.disconnected {
-    color: #dc3545;
-    background: rgba(220, 53, 69, 0.1);
+    color: var(--error-600);
+    background: var(--error-50);
+    border: 1px solid var(--error-200);
 }
 
 .status-value.connecting {
-    color: #ffc107;
-    background: rgba(255, 193, 7, 0.1);
+    color: var(--warning-600);
+    background: var(--warning-50);
+    border: 1px solid var(--warning-200);
+}
+
+.status-value i {
+    font-size: 0.875rem;
 }
 
 .section-description {
