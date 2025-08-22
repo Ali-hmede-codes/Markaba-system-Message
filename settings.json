@@ -1,6 +1,11 @@
 {
-  "sendToTelegram": true,
+  "sendToTelegram": false,
   "sendToWhatsApp": true,
   "telegramSettings": false,
-  "batchSize": 5
+  "batchSize": 10,
+  "telegramConfig": {
+    "botToken": "8278027059:AAGEH3PPqRNk-LPUPtV5wAUwdu4FXCXhR20",
+    "channelId": "-1002501346263",
+    "userId": "989228365"
+  }
 }

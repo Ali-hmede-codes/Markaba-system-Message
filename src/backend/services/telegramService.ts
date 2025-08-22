@@ -11,30 +11,67 @@ interface TelegramConfig {
 
 class TelegramService extends EventEmitter {
   private config: TelegramConfig;
-  private bot: TelegramBot;
+  private bot: TelegramBot | null = null;
   private isConnected: boolean = false;
 
   constructor() {
     super();
-    this.config = {
+    this.config = this.loadConfig();
+  }
+
+  private loadConfig(): TelegramConfig {
+    try {
+      const settingsPath = path.join(process.cwd(), 'settings.json');
+      if (fs.existsSync(settingsPath)) {
+        const settingsData = fs.readFileSync(settingsPath, 'utf8');
+        const settings = JSON.parse(settingsData);
+        
+        if (settings.telegramConfig) {
+          return {
+            botToken: settings.telegramConfig.botToken || '',
+            channelId: parseInt(settings.telegramConfig.channelId || '0'),
+            userId: parseInt(settings.telegramConfig.userId || '0')
+          };
+        }
+      }
+    } catch (error) {
+      console.error('Error reading Telegram config from settings:', error);
+    }
+    
+    // Fallback to environment variables if settings.json doesn't have config
+    return {
       botToken: process.env.TELEGRAM_BOT_TOKEN || '',
       channelId: parseInt(process.env.TELEGRAM_CHANNEL_ID || '0'),
       userId: parseInt(process.env.TELEGRAM_USER_ID || '0')
     };
-    
-    if (!this.config.botToken) {
-      throw new Error('TELEGRAM_BOT_TOKEN is not configured in environment variables');
+  }
+
+  private initializeBot(): void {
+    if (this.config.botToken && !this.bot) {
+      // Initialize bot without polling (we only send messages)
+      this.bot = new TelegramBot(this.config.botToken, { polling: false });
     }
-    
-    // Initialize bot without polling (we only send messages)
-    this.bot = new TelegramBot(this.config.botToken, { polling: false });
   }
 
   async initialize(): Promise<void> {
     try {
+      // Reload config in case settings changed
+      this.config = this.loadConfig();
+      
       // Validate configuration
+      if (!this.config.botToken) {
+        throw new Error('Telegram bot token is not configured');
+      }
+      
       if (!this.config.channelId || this.config.channelId === 0) {
-        throw new Error('TELEGRAM_CHANNEL_ID is not configured or invalid in environment variables');
+        throw new Error('Telegram channel ID is not configured or invalid');
+      }
+      
+      // Initialize bot
+      this.initializeBot();
+      
+      if (!this.bot) {
+        throw new Error('Failed to initialize Telegram bot');
       }
       
       // Test bot connection using node-telegram-bot-api
@@ -47,6 +84,7 @@ class TelegramService extends EventEmitter {
     } catch (error) {
       console.error('Telegram connection error:', error);
       this.isConnected = false;
+      this.bot = null;
       this.emit('connected', false);
       throw error;
     }
@@ -54,8 +92,8 @@ class TelegramService extends EventEmitter {
 
   async sendMessage(text: string): Promise<any> {
     try {
-      if (!this.isConnected) {
-        throw new Error('Telegram bot is not connected. Please initialize first.');
+      if (!this.isConnected || !this.bot) {
+        throw new Error('Telegram bot is not connected');
       }
       
       const message = await this.bot.sendMessage(this.config.channelId, text, {
@@ -72,8 +110,8 @@ class TelegramService extends EventEmitter {
 
   async sendPhoto(photoBuffer: Buffer, caption: string, fileName: string): Promise<any> {
     try {
-      if (!this.isConnected) {
-        throw new Error('Telegram bot is not connected. Please initialize first.');
+      if (!this.isConnected || !this.bot) {
+        throw new Error('Telegram bot is not connected');
       }
       
       const message = await this.bot.sendPhoto(this.config.channelId, photoBuffer, {
@@ -91,8 +129,8 @@ class TelegramService extends EventEmitter {
 
   async sendVideo(videoBuffer: Buffer, caption: string, fileName: string): Promise<any> {
     try {
-      if (!this.isConnected) {
-        throw new Error('Telegram bot is not connected. Please initialize first.');
+      if (!this.isConnected || !this.bot) {
+        throw new Error('Telegram bot is not connected');
       }
       
       const message = await this.bot.sendVideo(this.config.channelId, videoBuffer, {
@@ -110,8 +148,8 @@ class TelegramService extends EventEmitter {
 
   async sendDocument(documentBuffer: Buffer, caption: string, fileName: string): Promise<any> {
     try {
-      if (!this.isConnected) {
-        throw new Error('Telegram bot is not connected. Please initialize first.');
+      if (!this.isConnected || !this.bot) {
+        throw new Error('Telegram bot is not connected');
       }
       
       const message = await this.bot.sendDocument(this.config.channelId, documentBuffer, {

@@ -1,6 +1,8 @@
 import * as express from 'express';
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
+import * as fs from 'fs-extra';
+import * as path from 'path';
 import whatsappService from '../services/whatsappService';
 import telegramService from '../services/telegramService';
 import { createFileValidationRegex, isFileTypeSupported } from '../config/mediaTypes';
@@ -71,6 +73,26 @@ function cleanupFailedBatch(fingerprint: string): void {
 }
 
 const router: Router = express.Router();
+
+// Function to read settings
+function readSettings() {
+  try {
+    const settingsPath = path.join(process.cwd(), 'settings.json');
+    if (fs.existsSync(settingsPath)) {
+      const settingsData = fs.readFileSync(settingsPath, 'utf8');
+      return JSON.parse(settingsData);
+    }
+  } catch (error) {
+    console.error('Error reading settings:', error);
+  }
+  // Return default settings if file doesn't exist or error occurs
+  return {
+    sendToTelegram: false,
+    sendToWhatsApp: true,
+    telegramSettings: false,
+    batchSize: 10
+  };
+}
 
 // Configure multer for file uploads
 const upload = multer({
@@ -202,31 +224,38 @@ router.post('/send', upload.single('media'), async (req: Request, res: Response)
     // Start batch processing to prevent duplicates
     startBatchProcessing(messageFingerprint, message, groupIds);
     
+    // Read current settings
+    const settings = readSettings();
+    
     let whatsappResults;
     let telegramResult = null;
     
-    // Send to WhatsApp
-    if (mediaFile) {
-      // Send media message
-      console.log(`Sending media message: ${mediaFile.originalname} (${mediaFile.mimetype})`);
-      whatsappResults = await whatsappService.sendMessages(
-        groupIds, 
-        message, 
-        batchSize,
-        mediaFile.buffer,
-        mediaFile.mimetype,
-        mediaFile.originalname
-      );
+    // Send to WhatsApp only if enabled in settings
+    if (settings.sendToWhatsApp) {
+      if (mediaFile) {
+        // Send media message
+        console.log(`Sending media message to WhatsApp: ${mediaFile.originalname} (${mediaFile.mimetype})`);
+        whatsappResults = await whatsappService.sendMessages(
+          groupIds, 
+          message, 
+          batchSize,
+          mediaFile.buffer,
+          mediaFile.mimetype,
+          mediaFile.originalname
+        );
+      } else {
+        // Send text message
+        whatsappResults = await whatsappService.sendMessages(groupIds, message, batchSize);
+      }
     } else {
-      // Send text message
-      whatsappResults = await whatsappService.sendMessages(groupIds, message, batchSize);
+      console.log('WhatsApp sending disabled in settings');
+      whatsappResults = { success: false, message: 'WhatsApp sending disabled in settings' };
     }
     
-
-    
-    // Send to Telegram if connected
-    if (telegramService.getConnectionStatus()) {
+    // Send to Telegram only if enabled in settings and connected
+    if (settings.sendToTelegram && telegramService.getConnectionStatus()) {
       try {
+        console.log('Sending message to Telegram...');
         if (mediaFile) {
           telegramResult = await telegramService.sendMediaMessage(
             mediaFile.buffer,
@@ -244,6 +273,9 @@ router.post('/send', upload.single('media'), async (req: Request, res: Response)
           error: telegramError instanceof Error ? telegramError.message : 'Unknown error' 
         };
       }
+    } else if (!settings.sendToTelegram) {
+      console.log('Telegram sending disabled in settings');
+      telegramResult = { success: false, message: 'Telegram sending disabled in settings' };
     } else {
       telegramResult = { success: false, message: 'Telegram not connected' };
     }

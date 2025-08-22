@@ -750,6 +750,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('toggle-whatsapp').checked = data.settings.sendToWhatsApp;
                 document.getElementById('toggle-telegram-settings').checked = data.settings.telegramSettings;
                 document.getElementById('batch-size-setting').value = data.settings.batchSize;
+                
+                // Load Telegram configuration if available
+                if (data.settings.telegramConfig) {
+                    document.getElementById('telegram-bot-token').value = data.settings.telegramConfig.botToken || '';
+                    document.getElementById('telegram-channel-id').value = data.settings.telegramConfig.channelId || '';
+                    document.getElementById('telegram-user-id').value = data.settings.telegramConfig.userId || '';
+                }
+                
+                // Show/hide Telegram config based on toggle
+                toggleTelegramConfig(data.settings.telegramSettings);
             } else {
                 showMessage('Failed to load settings', 'error');
             }
@@ -779,11 +789,65 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Function to toggle Telegram config visibility
+    function toggleTelegramConfig(show) {
+        const configSection = document.getElementById('telegram-config');
+        if (configSection) {
+            configSection.style.display = show ? 'block' : 'none';
+        }
+    }
+    
+    // Function to save Telegram configuration
+    async function saveTelegramConfig() {
+        try {
+            const botToken = document.getElementById('telegram-bot-token').value.trim();
+            const channelId = document.getElementById('telegram-channel-id').value.trim();
+            const userId = document.getElementById('telegram-user-id').value.trim();
+            
+            if (!botToken || !channelId || !userId) {
+                showMessage('يرجى ملء جميع حقول إعدادات تليجرام', 'error');
+                return;
+            }
+            
+            const telegramConfig = {
+                botToken: botToken,
+                channelId: channelId,
+                userId: userId
+            };
+            
+            const response = await fetch('/api/settings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({ telegramConfig: telegramConfig })
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                showMessage('تم حفظ إعدادات تليجرام بنجاح', 'success');
+            } else {
+                showMessage('فشل في حفظ إعدادات تليجرام', 'error');
+            }
+        } catch (error) {
+            console.error('Save Telegram config error:', error);
+            showMessage('فشل في حفظ إعدادات تليجرام', 'error');
+        }
+    }
+
     // Setup settings event listeners
     document.getElementById('toggle-telegram').addEventListener('change', (e) => updateSetting('sendToTelegram', e.target.checked));
     document.getElementById('toggle-whatsapp').addEventListener('change', (e) => updateSetting('sendToWhatsApp', e.target.checked));
-    document.getElementById('toggle-telegram-settings').addEventListener('change', (e) => updateSetting('telegramSettings', e.target.checked));
+    document.getElementById('toggle-telegram-settings').addEventListener('change', (e) => {
+        const isEnabled = e.target.checked;
+        updateSetting('telegramSettings', isEnabled);
+        toggleTelegramConfig(isEnabled);
+    });
     document.getElementById('batch-size-setting').addEventListener('change', (e) => updateSetting('batchSize', parseInt(e.target.value)));
+    
+    // Setup Telegram config save button
+    document.getElementById('save-telegram-config').addEventListener('click', saveTelegramConfig);
 });
 
 // Mobile Menu Functions

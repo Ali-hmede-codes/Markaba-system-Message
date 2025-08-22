@@ -303,6 +303,31 @@
                                 <span class="slider"></span>
                             </label>
                         </div>
+                        
+                        <!-- Telegram Configuration Fields (hidden by default) -->
+                        <div id="telegram-config" class="telegram-config" style="display: none;">
+                            <div class="config-header">
+                                <h3><i class="fab fa-telegram"></i> إعدادات بوت تليجرام</h3>
+                            </div>
+                            <div class="setting-item">
+                                <label>رمز البوت (Bot Token)</label>
+                                <input type="text" id="telegram-bot-token" placeholder="8278027059:AAGEH3PPqRNk-LPUPtV5wAUwdu4FXCXhR20">
+                            </div>
+                            <div class="setting-item">
+                                <label>معرف القناة (Channel ID)</label>
+                                <input type="text" id="telegram-channel-id" placeholder="-1002501346263">
+                            </div>
+                            <div class="setting-item">
+                                <label>معرف المستخدم (User ID)</label>
+                                <input type="text" id="telegram-user-id" placeholder="989228365">
+                            </div>
+                            <div class="setting-item">
+                                <button type="button" id="save-telegram-config" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> حفظ إعدادات تليجرام
+                                </button>
+                            </div>
+                        </div>
+                        
                         <div class="setting-item">
                             <label>حجم الدفعات</label>
                             <input type="number" id="batch-size-setting" min="1" max="50" value="10">

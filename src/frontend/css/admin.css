@@ -1450,3 +1450,77 @@ input:checked + .slider {
 input:checked + .slider:before {
     transform: translateX(-26px); /* Adjusted for RTL */
 }
+
+/* Telegram Configuration Styles */
+.telegram-config {
+    margin: 20px 0;
+    padding: 20px;
+    background: #f0f8ff;
+    border: 2px solid #0088cc;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 136, 204, 0.1);
+}
+
+.config-header {
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #0088cc;
+}
+
+.config-header h3 {
+    color: #0088cc;
+    margin: 0;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.telegram-config .setting-item {
+    background: white;
+    border: 1px solid #0088cc;
+    margin-bottom: 15px;
+}
+
+.telegram-config .setting-item label {
+    color: #0088cc;
+    font-weight: 600;
+}
+
+.telegram-config input[type="text"] {
+    width: 300px;
+    padding: 10px;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+.telegram-config input[type="text"]:focus {
+    outline: none;
+    border-color: #0088cc;
+    box-shadow: 0 0 5px rgba(0, 136, 204, 0.3);
+}
+
+.telegram-config .btn {
+    background: #0088cc;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.telegram-config .btn:hover {
+    background: #006699;
+}
+
+.telegram-config .btn:active {
+    transform: translateY(1px);
+}
