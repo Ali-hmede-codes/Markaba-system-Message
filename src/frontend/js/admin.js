@@ -89,7 +89,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Tab switching
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                switchTab(e.target.dataset.tab);
+                const tabName = e.target.dataset.tab;
+                switchTab(tabName);
+                if (tabName === 'settings') {
+                    loadSettings();
+                }
             });
         });
         
@@ -732,6 +736,54 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     });
+
+    // Settings functions
+    async function loadSettings() {
+        try {
+            const response = await fetch('/api/settings', {
+                method: 'GET',
+                credentials: 'include'
+            });
+            const data = await response.json();
+            if (data.success) {
+                document.getElementById('toggle-telegram').checked = data.settings.sendToTelegram;
+                document.getElementById('toggle-whatsapp').checked = data.settings.sendToWhatsApp;
+                document.getElementById('toggle-telegram-settings').checked = data.settings.telegramSettings;
+                document.getElementById('batch-size-input').value = data.settings.batchSize;
+            } else {
+                showMessage('Failed to load settings', 'error');
+            }
+        } catch (error) {
+            console.error('Load settings error:', error);
+            showMessage('Failed to load settings', 'error');
+        }
+    }
+
+    async function updateSetting(key, value) {
+        try {
+            const response = await fetch('/api/settings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({ [key]: value })
+            });
+            const data = await response.json();
+            if (!data.success) {
+                showMessage('Failed to update setting', 'error');
+            }
+        } catch (error) {
+            console.error('Update setting error:', error);
+            showMessage('Failed to update setting', 'error');
+        }
+    }
+
+    // Setup settings event listeners
+    document.getElementById('toggle-telegram').addEventListener('change', (e) => updateSetting('sendToTelegram', e.target.checked));
+    document.getElementById('toggle-whatsapp').addEventListener('change', (e) => updateSetting('sendToWhatsApp', e.target.checked));
+    document.getElementById('toggle-telegram-settings').addEventListener('change', (e) => updateSetting('telegramSettings', e.target.checked));
+    document.getElementById('batch-size-input').addEventListener('change', (e) => updateSetting('batchSize', parseInt(e.target.value)));
 });
 
 // Mobile Menu Functions

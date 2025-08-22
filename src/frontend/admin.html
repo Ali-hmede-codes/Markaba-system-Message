@@ -33,10 +33,10 @@
             </div>
             <div class="admin-nav">
                 <button id="back-to-main" class="nav-btn back-to-main-btn">
-                    <i class="fas fa-arrow-right"></i>
-                    <span>Back to Main</span>
+                    <i class="fas fa-arrow-left"></i>
+                    <span>عودة إلى القائمة</span>
                 </button>
-                <button id="logout-btn" class="nav-btn logout">Logout</button>
+                <button id="logout-btn" class="nav-btn logout">تسجيل الخروج</button>
             </div>
         </div>
         
@@ -45,11 +45,12 @@
         <div class="admin-content">
             <aside class="admin-sidebar">
                 <nav class="admin-tabs">
-                    <button class="tab-btn active" data-tab="users">User Management</button>
-                    <button class="tab-btn" data-tab="add-user">Add User</button>
-                    <button class="tab-btn" data-tab="whatsapp">WhatsApp Control</button>
-                    <button class="tab-btn" data-tab="groups">المجموعات</button>
-                    <button class="tab-btn" data-tab="messages">الرسائل</button>
+                    <button class="tab-btn active" data-tab="users"><i class="fas fa-users"></i> إدارة المستخدمين</button>
+                    <button class="tab-btn" data-tab="add-user"><i class="fas fa-user-plus"></i> إضافة مستخدم</button>
+                    <button class="tab-btn" data-tab="whatsapp"><i class="fab fa-whatsapp"></i> التحكم في واتساب</button>
+                    <button class="tab-btn" data-tab="groups"><i class="fas fa-users"></i> المجموعات</button>
+                    <button class="tab-btn" data-tab="messages"><i class="fas fa-envelope"></i> الرسائل</button>
+                <button class="tab-btn" data-tab="settings"><i class="fas fa-cog"></i> الإعدادات</button>
                 </nav>
             </aside>
             
@@ -58,23 +59,23 @@
             <!-- Users Management Tab -->
             <div id="users-tab" class="tab-content active">
                 <div class="section-header">
-                    <h2>Users</h2>
-                    <button id="refresh-users" class="btn btn-secondary">Refresh</button>
+                    <h2><i class="fas fa-users"></i> المستخدمين</h2>
+                    <button id="refresh-users" class="btn btn-secondary">تحديث</button>
                 </div>
                 
                 <div class="users-table-container">
                     <table id="users-table" class="admin-table">
                         <thead>
                             <tr>
-                                <th>ID</th>
-                                <th>Username</th>
-                                <th>Email</th>
-                                <th>Full Name</th>
-                                <th>Role</th>
-                                <th>Status</th>
-                                <th>Created</th>
-                                <th>Last Login</th>
-                                <th>Actions</th>
+                                <th>المعرف</th>
+                                <th>اسم المستخدم</th>
+                                <th>البريد الإلكتروني</th>
+                                <th>الاسم الكامل</th>
+                                <th>الدور</th>
+                                <th>الحالة</th>
+                                <th>تاريخ الإنشاء</th>
+                                <th>آخر تسجيل دخول</th>
+                                <th>الإجراءات</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -87,49 +88,49 @@
             <!-- Add User Tab -->
             <div id="add-user-tab" class="tab-content">
                 <div class="section-header">
-                    <h2>Add New User</h2>
+                    <h2><i class="fas fa-user-plus"></i> إضافة مستخدم جديد</h2>
                 </div>
                 
                 <form id="add-user-form" class="admin-form">
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="new-username">Username</label>
+                            <label for="new-username">اسم المستخدم</label>
                             <input type="text" id="new-username" name="username" required>
                         </div>
                         <div class="form-group">
-                            <label for="new-email">Email</label>
+                            <label for="new-email">البريد الإلكتروني</label>
                             <input type="email" id="new-email" name="email" required>
                         </div>
                     </div>
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="new-fullname">Full Name</label>
+                            <label for="new-fullname">الاسم الكامل</label>
                             <input type="text" id="new-fullname" name="full_name" required>
                         </div>
                         <div class="form-group">
-                            <label for="new-role">Role</label>
+                            <label for="new-role">الدور</label>
                             <select id="new-role" name="role" required>
-                                <option value="user">User</option>
-                                <option value="admin">Admin</option>
+                                <option value="user">مستخدم</option>
+                                <option value="admin">مدير</option>
                             </select>
                         </div>
                     </div>
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="new-password">Password</label>
+                            <label for="new-password">كلمة المرور</label>
                             <input type="password" id="new-password" name="password" required>
                         </div>
                         <div class="form-group">
-                            <label for="confirm-password">Confirm Password</label>
+                            <label for="confirm-password">تأكيد كلمة المرور</label>
                             <input type="password" id="confirm-password" name="confirm_password" required>
                         </div>
                     </div>
                     
                     <div class="form-actions">
-                        <button type="submit" class="btn btn-primary">Add User</button>
-                        <button type="reset" class="btn btn-secondary">Clear Form</button>
+                        <button type="submit" class="btn btn-primary">إضافة مستخدم</button>
+                        <button type="reset" class="btn btn-secondary">مسح النموذج</button>
                     </div>
                 </form>
             </div>
@@ -137,39 +138,39 @@
             <!-- WhatsApp Control Tab -->
             <div id="whatsapp-tab" class="tab-content">
                 <div class="section-header">
-                    <h2>WhatsApp Control Panel</h2>
-                    <p class="section-description">Manage WhatsApp connection and authentication (Admin Only)</p>
+                    <h2><i class="fab fa-whatsapp"></i> لوحة التحكم في واتساب</h2>
+                    <p class="section-description">إدارة اتصال واتساب والمصادقة (للإداريين فقط)</p>
                 </div>
                 
                 <div class="whatsapp-controls">
                     <div class="control-section">
-                        <h3>Connection Management</h3>
+                        <h3>إدارة الاتصال</h3>
                         <div class="control-buttons">
                             <button class="btn btn-warning" id="admin-whatsapp-logout">
                                 <span class="btn-icon">🚪</span>
-                                Logout from WhatsApp
+                                تسجيل الخروج من واتساب
                             </button>
                             <button class="btn btn-primary" id="admin-force-reconnect">
                                 <span class="btn-icon">🔄</span>
-                                Force Reconnect
+                                إعادة الاتصال بالقوة
                             </button>
                             <button class="btn btn-danger" id="admin-clear-auth">
                                 <span class="btn-icon">🗑️</span>
-                                Clear Authentication Data
+                                مسح بيانات المصادقة
                             </button>
                         </div>
                     </div>
                     
                     <div class="control-section">
-                        <h3>Connection Status</h3>
+                        <h3>حالة الاتصال</h3>
                         <div class="status-info">
                             <div class="status-item">
-                                <span class="status-label">WhatsApp Status:</span>
-                                <span class="status-value" id="admin-whatsapp-status">Checking...</span>
+                                <span class="status-label">حالة واتساب:</span>
+                                <span class="status-value" id="admin-whatsapp-status">جارٍ التحقق...</span>
                             </div>
                             <div class="status-item">
-                                <span class="status-label">Authentication:</span>
-                                <span class="status-value" id="admin-auth-status">Checking...</span>
+                                <span class="status-label">المصادقة:</span>
+                                <span class="status-value" id="admin-auth-status">جارٍ التحقق...</span>
                             </div>
                         </div>
                     </div>
@@ -179,7 +180,7 @@
             <!-- Groups Management Tab -->
             <div id="groups-tab" class="tab-content">
                 <div class="section-header">
-                    <h2>إدارة المجموعات</h2>
+                    <h2><i class="fas fa-users"></i> إدارة المجموعات</h2>
                     <div class="section-actions">
                         <button class="btn btn-secondary" id="refresh-groups-btn">
                             <span class="btn-icon">🔄</span>
@@ -217,7 +218,7 @@
             <!-- Messages Management Tab -->
             <div id="messages-tab" class="tab-content">
                 <div class="section-header">
-                    <h2>إرسال الرسائل</h2>
+                    <h2><i class="fas fa-envelope"></i> إرسال الرسائل</h2>
                 </div>
                 
                 <form id="message-form" class="admin-form" enctype="multipart/form-data">
@@ -272,6 +273,40 @@
                         <div class="progress-fill" id="progress-fill"></div>
                     </div>
                     <div id="progress-log"></div>
+                </div>
+                <!-- Settings Tab -->
+                <div id="settings-tab" class="tab-content">
+                    <div class="section-header">
+                        <h2><i class="fas fa-cog"></i> الإعدادات</h2>
+                    </div>
+                    
+                    <div class="settings-list">
+                        <div class="setting-item">
+                            <label>إرسال الرسائل إلى تليجرام</label>
+                            <label class="switch">
+                                <input type="checkbox" id="toggle-telegram">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label>إرسال الرسائل إلى واتساب</label>
+                            <label class="switch">
+                                <input type="checkbox" id="toggle-whatsapp">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label>إعدادات تليجرام</label>
+                            <label class="switch">
+                                <input type="checkbox" id="toggle-telegram-settings">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label>حجم الدفعات</label>
+                            <input type="number" id="batch-size-setting" min="1" max="50" value="10">
+                        </div>
+                    </div>
                 </div>
             </main>
         </div>

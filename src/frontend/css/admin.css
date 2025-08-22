@@ -326,12 +326,18 @@ body.admin-page .section-header {
 }
 
 body.admin-page .section-header h2 {
-    margin: 0 !important;
-    color: var(--text-primary) !important;
-    font-size: var(--font-size-2xl) !important;
-    font-weight: var(--font-weight-bold) !important;
-    line-height: var(--line-height-tight) !important;
-    font-family: inherit !important;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+    margin: 0 0 var(--space-4) 0;
+}
+
+.section-header h2 i {
+    color: var(--primary-600);
+    font-size: 1.2em;
 }
 
 .section-description {
@@ -1365,4 +1371,82 @@ body.admin-page .form-control:hover {
         align-items: flex-start;
         gap: 8px;
     }
+}
+
+/* Settings Tab Styles */
+.settings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 600px;
+    margin: 20px auto;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+
+.setting-item label {
+    font-weight: 600;
+    color: #333;
+}
+
+.setting-item input[type="number"] {
+    width: 100px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    text-align: center;
+}
+
+/* iPhone-like Toggle Switch */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    right: 4px; /* Adjusted for RTL */
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #2196F3;
+}
+
+input:checked + .slider:before {
+    transform: translateX(-26px); /* Adjusted for RTL */
 }

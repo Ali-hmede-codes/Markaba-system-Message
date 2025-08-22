@@ -9,6 +9,7 @@ import cookieParser from 'cookie-parser';
 import whatsappRoutes from './routes/whatsapp';
 import telegramRoutes from './routes/telegram';
 import authRoutes from './routes/auth';
+import settingsRoutes from './routes/settings';
 import whatsappService from './services/whatsappService';
 import telegramService from './services/telegramService';
 import databaseService from './services/databaseService';
@@ -60,6 +61,7 @@ app.get('/api/health', async (req: Request, res: Response) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/telegram', telegramRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Serve login page
 app.get('/login', (req: Request, res: Response) => {
