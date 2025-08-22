@@ -749,7 +749,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('toggle-telegram').checked = data.settings.sendToTelegram;
                 document.getElementById('toggle-whatsapp').checked = data.settings.sendToWhatsApp;
                 document.getElementById('toggle-telegram-settings').checked = data.settings.telegramSettings;
-                document.getElementById('batch-size-input').value = data.settings.batchSize;
+                document.getElementById('batch-size-setting').value = data.settings.batchSize;
             } else {
                 showMessage('Failed to load settings', 'error');
             }
@@ -783,7 +783,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('toggle-telegram').addEventListener('change', (e) => updateSetting('sendToTelegram', e.target.checked));
     document.getElementById('toggle-whatsapp').addEventListener('change', (e) => updateSetting('sendToWhatsApp', e.target.checked));
     document.getElementById('toggle-telegram-settings').addEventListener('change', (e) => updateSetting('telegramSettings', e.target.checked));
-    document.getElementById('batch-size-input').addEventListener('change', (e) => updateSetting('batchSize', parseInt(e.target.value)));
+    document.getElementById('batch-size-setting').addEventListener('change', (e) => updateSetting('batchSize', parseInt(e.target.value)));
 });
 
 // Mobile Menu Functions
