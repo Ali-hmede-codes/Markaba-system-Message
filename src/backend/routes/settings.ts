@@ -23,7 +23,7 @@ router.post('/', checkAuth, async (req: Request, res: Response) => {
   try {
     const updates = req.body;
     // Validate updates
-    const validKeys = ['sendToTelegram', 'sendToWhatsApp', 'telegramSettings', 'batchSize'];
+    const validKeys = ['sendToTelegram', 'sendToWhatsApp', 'telegramSettings', 'batchSize', 'telegramConfig'];
     for (const key in updates) {
       if (!validKeys.includes(key)) {
         return res.status(400).json({ success: false, message: `Invalid setting key: ${key}` });
@@ -31,7 +31,16 @@ router.post('/', checkAuth, async (req: Request, res: Response) => {
       if (key === 'batchSize' && typeof updates[key] !== 'number') {
         return res.status(400).json({ success: false, message: 'Batch size must be a number' });
       }
-      if (key !== 'batchSize' && typeof updates[key] !== 'boolean') {
+      if (key === 'telegramConfig') {
+        if (typeof updates[key] !== 'object' || updates[key] === null) {
+          return res.status(400).json({ success: false, message: 'telegramConfig must be an object' });
+        }
+        const config = updates[key];
+        if (typeof config.botToken !== 'string' || typeof config.channelId !== 'string' || typeof config.userId !== 'string') {
+          return res.status(400).json({ success: false, message: 'telegramConfig must contain botToken, channelId, and userId as strings' });
+        }
+      }
+      if (key !== 'batchSize' && key !== 'telegramConfig' && typeof updates[key] !== 'boolean') {
         return res.status(400).json({ success: false, message: `${key} must be a boolean` });
       }
     }
