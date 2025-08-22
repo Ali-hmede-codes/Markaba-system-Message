@@ -1,0 +1,291 @@
+/* Loading Screen Styles - Dark Theme */
+
+.loading-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: var(--neutral-900);
+  background-image: var(--gradient-background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity var(--transition-slow), visibility var(--transition-slow);
+}
+
+.loading-screen.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-8);
+  max-width: 400px;
+  width: 100%;
+}
+
+.loading-logo {
+  margin-bottom: var(--space-8);
+  position: relative;
+}
+
+.logo-image {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.3));
+}
+
+.spinning {
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-content {
+  width: 100%;
+}
+
+.loading-title {
+  color: var(--text-primary);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--space-6);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.loading-progress {
+  margin-bottom: var(--space-8);
+}
+
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--neutral-700);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-500), var(--primary-400), var(--primary-600));
+  border-radius: var(--radius-full);
+  width: 0%;
+  animation: progressAnimation 3s ease-in-out infinite;
+  position: relative;
+}
+
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+@keyframes progressAnimation {
+  0% {
+    width: 0%;
+  }
+  50% {
+    width: 70%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.wifi-status {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.wifi-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-6);
+  background: var(--neutral-800);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--neutral-600);
+  backdrop-filter: blur(10px);
+}
+
+.wifi-icon {
+  font-size: var(--font-size-lg);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.wifi-text {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.wifi-indicator.good {
+  border-color: var(--success-500);
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.wifi-indicator.good .wifi-text {
+  color: var(--success-400);
+}
+
+.wifi-indicator.bad {
+  border-color: var(--error-500);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.wifi-indicator.bad .wifi-text {
+  color: var(--error-400);
+}
+
+.wifi-indicator.checking {
+  border-color: var(--warning-500);
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.wifi-indicator.checking .wifi-text {
+  color: var(--warning-400);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .loading-container {
+    padding: var(--space-6);
+  }
+  
+  .logo-image {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .loading-title {
+    font-size: var(--font-size-xl);
+  }
+  
+  .wifi-indicator {
+    padding: var(--space-3) var(--space-4);
+  }
+  
+  .wifi-text {
+    font-size: var(--font-size-xs);
+  }
+}
+
+@media (max-height: 600px) {
+  .loading-container {
+    padding: var(--space-4);
+  }
+  
+  .logo-image {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .loading-title {
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--space-4);
+  }
+  
+  .loading-progress {
+    margin-bottom: var(--space-4);
+  }
+}
+
+/* Dark mode enhancements */
+@media (prefers-color-scheme: dark) {
+  .loading-screen {
+    background: var(--neutral-950);
+  }
+  
+  .loading-title {
+    color: var(--neutral-100);
+  }
+  
+  .wifi-indicator {
+    background: var(--neutral-900);
+    border-color: var(--neutral-700);
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .spinning {
+    animation: none;
+  }
+  
+  .progress-fill {
+    animation: none;
+    width: 50%;
+  }
+  
+  .progress-fill::after {
+    animation: none;
+  }
+  
+  .wifi-icon {
+    animation: none;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .loading-screen {
+    background: #000000;
+  }
+  
+  .loading-title {
+    color: #ffffff;
+  }
+  
+  .wifi-indicator {
+    border-width: 2px;
+  }
+  
+  .progress-bar {
+    border: 1px solid #ffffff;
+  }
+}

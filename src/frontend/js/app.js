@@ -102,6 +102,137 @@ document.addEventListener('DOMContentLoaded', () => {
   window.hideToast = hideToast;
   window.hideAllToasts = hideAllToasts;
 
+  // Loading Screen Functions
+  function initializeLoadingScreen() {
+    loadingScreen = document.getElementById('loading-screen');
+    wifiStatusElement = document.getElementById('wifi-status-text');
+    
+    // Check if data already exists to avoid unnecessary loading screen
+    const hasExistingGroups = groups.length > 0;
+    const hasGroupsInDOM = groupsList && groupsList.children.length > 0 && 
+                          !groupsList.innerHTML.includes('Loading') && 
+                          !groupsList.innerHTML.includes('loading');
+    
+    // Only show loading screen if no data exists
+    if (loadingScreen && !hasExistingGroups && !hasGroupsInDOM) {
+      showLoadingScreen();
+      checkWifiStatus();
+    } else {
+      // Data already exists, mark as loaded
+      isDataLoaded = true;
+      if (loadingScreen) {
+        loadingScreen.style.display = 'none';
+      }
+    }
+  }
+
+  function showLoadingScreen() {
+    if (loadingScreen) {
+      loadingScreen.classList.remove('hidden');
+      isDataLoaded = false;
+    }
+  }
+
+  function hideLoadingScreen() {
+    if (loadingScreen && isDataLoaded) {
+      loadingScreen.classList.add('hidden');
+      setTimeout(() => {
+        if (loadingScreen) {
+          loadingScreen.style.display = 'none';
+        }
+      }, 500); // Wait for transition to complete
+    }
+  }
+
+  function setDataLoaded() {
+    isDataLoaded = true;
+    setTimeout(() => {
+      hideLoadingScreen();
+    }, 1000); // Show loading screen for at least 1 second
+  }
+
+  async function checkWifiStatus() {
+    if (!wifiStatusElement) return;
+    
+    try {
+      // Update status to checking
+      updateWifiStatus('checking', 'جاري فحص الاتصال...');
+      
+      // Check network connection
+      const isOnline = navigator.onLine;
+      
+      if (!isOnline) {
+        updateWifiStatus('bad', 'لا يوجد اتصال بالإنترنت');
+        return;
+      }
+      
+      // Test actual connectivity with a fast endpoint
+      const startTime = Date.now();
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      try {
+        const response = await fetch('/api/auth/status', {
+          method: 'HEAD',
+          signal: controller.signal,
+          cache: 'no-cache'
+        });
+        
+        clearTimeout(timeoutId);
+        const responseTime = Date.now() - startTime;
+        
+        if (response.ok) {
+          if (responseTime < 1000) {
+            updateWifiStatus('good', 'اتصال ممتاز');
+          } else if (responseTime < 3000) {
+            updateWifiStatus('good', 'اتصال جيد');
+          } else {
+            updateWifiStatus('checking', 'اتصال بطيء');
+          }
+        } else {
+          updateWifiStatus('bad', 'مشكلة في الاتصال');
+        }
+      } catch (error) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+          updateWifiStatus('bad', 'انتهت مهلة الاتصال');
+        } else {
+          updateWifiStatus('bad', 'فشل في الاتصال');
+        }
+      }
+    } catch (error) {
+      console.error('WiFi status check error:', error);
+      updateWifiStatus('bad', 'خطأ في فحص الاتصال');
+    }
+  }
+
+  function updateWifiStatus(status, message) {
+    if (!wifiStatusElement) return;
+    
+    const wifiIndicator = wifiStatusElement.closest('.wifi-indicator');
+    if (wifiIndicator) {
+      // Remove all status classes
+      wifiIndicator.classList.remove('good', 'bad', 'checking');
+      // Add new status class
+      wifiIndicator.classList.add(status);
+    }
+    
+    wifiStatusElement.textContent = message;
+  }
+
+  // Network status listeners
+  window.addEventListener('online', () => {
+    if (!isDataLoaded) {
+      checkWifiStatus();
+    }
+  });
+
+  window.addEventListener('offline', () => {
+    if (!isDataLoaded) {
+      updateWifiStatus('bad', 'لا يوجد اتصال بالإنترنت');
+    }
+  });
+
   // State
   let isConnected = false;
   let authState = 'DISCONNECTED';
@@ -110,6 +241,11 @@ document.addEventListener('DOMContentLoaded', () => {
    let checkInterval;
    let isSendingMessage = false; // Flag to prevent duplicate sends
    let linkPreviewEnabled = true; // Link preview state
+   
+   // Loading screen state
+   let isDataLoaded = false;
+   let loadingScreen = null;
+   let wifiStatusElement = null;
    
    // Enhanced duplicate prevention system
    let lastMessageFingerprint = null;
@@ -177,6 +313,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Functions
   async function init() {
     try {
+      // Initialize loading screen first
+      initializeLoadingScreen();
+      
       // Check user authentication and role
       await checkUserRole();
       
@@ -197,14 +336,30 @@ document.addEventListener('DOMContentLoaded', () => {
       await loadLinkPreviewStatus();
       
       if (isConnected && authState === 'READY') {
-        // Add delay to ensure WhatsApp Web is fully loaded
+        // Check if groups already exist, if not fetch them
+        if (groups.length === 0) {
+          // Add delay to ensure WhatsApp Web is fully loaded
+          setTimeout(() => {
+            fetchGroups();
+          }, 5000); // Reduced delay for Baileys
+        } else {
+          // Groups already exist, just render them and mark as loaded
+          renderGroups();
+          setDataLoaded();
+        }
+      } else {
+        // If not connected, hide loading screen after UI setup
         setTimeout(() => {
-          fetchGroups();
-        }, 5000); // Reduced delay for Baileys
+          setDataLoaded();
+        }, 2000);
       }
     } catch (error) {
       console.error('Error checking status:', error);
       showToast('Error connecting to server', 'error');
+      // Hide loading screen even on error
+      setTimeout(() => {
+        setDataLoaded();
+      }, 1500);
     }
   }
 
@@ -409,6 +564,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function fetchGroups(force = false) {
     const groupsList = document.getElementById('groups-list');
+    
+    // Check if groups already exist and not forcing refresh
+    if (!force && groups.length > 0) {
+      console.log('Groups already loaded, skipping fetch');
+      renderGroups();
+      setDataLoaded();
+      return;
+    }
+    
     groupsList.innerHTML = '<div class="loading">Loading groups...</div>';
     
     console.log('Fetching groups, force:', force);
@@ -426,6 +590,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Auto-load favorite groups if available
         await autoLoadFavorites();
+        
+        // Mark data as loaded to hide loading screen
+        setDataLoaded();
 
       } else {
         console.error('Groups fetch failed:', data.error);

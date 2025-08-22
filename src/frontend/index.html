@@ -14,10 +14,34 @@
   <meta name="apple-mobile-web-app-title" content="Chatrix" />
   <link rel="manifest" href="assets/site.webmanifest" />
   <link rel="stylesheet" href="css/colors.css">
+  <link rel="stylesheet" href="css/loading.css">
   <link rel="stylesheet" href="css/dashboard.css">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+  <!-- Loading Screen -->
+  <div id="loading-screen" class="loading-screen">
+    <div class="loading-container">
+      <div class="loading-logo">
+        <img src="assets/logo.png" alt="Logo" class="logo-image spinning">
+      </div>
+      <div class="loading-content">
+        <h2 class="loading-title">جاري التحميل...</h2>
+        <div class="loading-progress">
+          <div class="progress-bar">
+            <div class="progress-fill"></div>
+          </div>
+        </div>
+        <div class="wifi-status">
+          <div class="wifi-indicator">
+            <i class="wifi-icon">📶</i>
+            <span class="wifi-text" id="wifi-status-text">جاري فحص الاتصال...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Navigation Header -->
   <nav class="navbar">
     <div class="nav-container">
