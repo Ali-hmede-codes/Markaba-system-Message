@@ -1,0 +1,35 @@
+/* Font Awesome Fallback CSS */
+/* This provides text alternatives when Font Awesome fails to load */
+
+.fas, .fab {
+    font-family: inherit;
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* Common icon fallbacks */
+.fa-users::before { content: "👥"; }
+.fa-user-plus::before { content: "➕👤"; }
+.fa-whatsapp::before { content: "💬"; }
+.fa-envelope::before { content: "✉️"; }
+.fa-cog::before { content: "⚙️"; }
+.fa-telegram::before { content: "📱"; }
+.fa-save::before { content: "💾"; }
+.fa-arrow-left::before { content: "←"; }
+.fa-lock::before { content: "🔒"; }
+.fa-spinner::before { content: "⏳"; }
+.fa-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Hide the fallback when Font Awesome is loaded */
+@supports (font-family: "Font Awesome 6 Free") {
+    .fas::before, .fab::before {
+        content: none;
+    }
+}
