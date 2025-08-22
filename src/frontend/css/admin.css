@@ -14,8 +14,12 @@ body.admin-page {
 
 body.admin-page * {
     direction: rtl !important;
-    font-family: inherit !important;
     box-sizing: border-box !important;
+}
+
+/* Apply font-family to all elements except Font Awesome icons */
+body.admin-page *:not(.fas):not(.fab):not(.far):not(.fal):not(.fad):not(.fat) {
+    font-family: inherit !important;
 }
 
 body.admin-page .admin-container {
