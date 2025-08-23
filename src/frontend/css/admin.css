@@ -1368,6 +1368,28 @@ body.admin-page .form-control:hover {
     
     body.admin-page .back-to-main-btn:hover {
         background: var(--primary-50) !important;
+    }
+    
+    /* Scheduled Messages Mobile Styles for Small Screens */
+    .scheduled-message-actions .btn {
+        font-size: var(--font-size-xs);
+        padding: var(--space-2);
+    }
+    
+    .scheduled-message-card {
+        padding: var(--space-4);
+    }
+    
+    .scheduled-message-info-item {
+        font-size: var(--font-size-xs);
+    }
+    
+    .scheduled-time-badge {
+        font-size: 0.625rem;
+        padding: 2px var(--space-2);
+    }
+    
+    body.admin-page .back-to-main-btn:hover {
         border-color: var(--primary-300) !important;
         transform: translateY(-2px) !important;
         box-shadow: var(--shadow-lg) !important;
@@ -1604,6 +1626,39 @@ body.admin-page .form-control:hover {
         flex-direction: column;
         align-items: flex-start;
         gap: 8px;
+    }
+    
+    /* Scheduled Messages Mobile Styles */
+    .scheduled-message-actions {
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+    
+    .scheduled-message-actions .btn {
+        width: 100%;
+        justify-content: center;
+        min-width: auto;
+    }
+    
+    .scheduled-message-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--space-3);
+    }
+    
+    .scheduled-message-info {
+        grid-template-columns: 1fr;
+    }
+    
+    .header-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--space-2);
+    }
+    
+    .header-actions .btn {
+        width: 100%;
+        justify-content: center;
     }
 }
 

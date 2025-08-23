@@ -592,6 +592,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 5000);
     }
     
+    // Make showMessage globally accessible
+    window.showMessage = showMessage;
+    
     // WhatsApp Control Functions
     async function handleWhatsAppLogout() {
         if (!confirm('Are you sure you want to logout from WhatsApp? This will disconnect the WhatsApp session.')) {
@@ -1279,11 +1282,11 @@ async function handleScheduledMessageSubmit(e) {
     }
 }
 
-async function editScheduledMessage(messageId) {
+window.editScheduledMessage = async function(messageId) {
     openScheduledMessageModal(messageId);
 }
 
-async function toggleScheduledMessage(messageId) {
+window.toggleScheduledMessage = async function(messageId) {
     try {
         const response = await fetch(`/api/scheduled-messages/${messageId}/toggle`, {
             method: 'PATCH'
@@ -1292,18 +1295,18 @@ async function toggleScheduledMessage(messageId) {
         const data = await response.json();
         
         if (data.success) {
-            showMessage('تم تغيير حالة الرسالة المجدولة بنجاح', 'success');
+            window.showMessage('تم تغيير حالة الرسالة المجدولة بنجاح', 'success');
             loadScheduledMessages();
         } else {
-            showMessage(data.message || 'خطأ في تغيير حالة الرسالة', 'error');
+            window.showMessage(data.message || 'خطأ في تغيير حالة الرسالة', 'error');
         }
     } catch (error) {
         console.error('Error toggling scheduled message:', error);
-        showMessage('خطأ في الاتصال بالخادم', 'error');
+        window.showMessage('خطأ في الاتصال بالخادم', 'error');
     }
 }
 
-async function deleteScheduledMessage(messageId) {
+window.deleteScheduledMessage = async function(messageId) {
     if (!confirm('هل أنت متأكد من حذف هذه الرسالة المجدولة؟')) {
         return;
     }
@@ -1316,14 +1319,14 @@ async function deleteScheduledMessage(messageId) {
         const data = await response.json();
         
         if (data.success) {
-            showMessage('تم حذف الرسالة المجدولة بنجاح', 'success');
+            window.showMessage('تم حذف الرسالة المجدولة بنجاح', 'success');
             loadScheduledMessages();
         } else {
-            showMessage(data.message || 'خطأ في حذف الرسالة', 'error');
+            window.showMessage(data.message || 'خطأ في حذف الرسالة', 'error');
         }
     } catch (error) {
         console.error('Error deleting scheduled message:', error);
-        showMessage('خطأ في الاتصال بالخادم', 'error');
+        window.showMessage('خطأ في الاتصال بالخادم', 'error');
     }
 }
 
