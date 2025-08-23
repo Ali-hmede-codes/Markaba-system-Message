@@ -413,7 +413,7 @@ router.post('/:id/sent', (req: Request, res: Response) => {
 // GET /api/scheduled-messages/lock-status - Check if message sending is locked
 router.get('/lock-status', (req: Request, res: Response) => {
     try {
-        const lockFilePath = path.join(__dirname, '../../../data/message-lock.json');
+        const lockFilePath = path.join(__dirname, '../../../data/messageLock.json');
         
         if (!fs.existsSync(lockFilePath)) {
             return res.json({ isLocked: false });

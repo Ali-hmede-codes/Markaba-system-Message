@@ -116,24 +116,15 @@ class SchedulingService {
         }
     }
 
-    private lockMessageSending(messageId: number, durationMinutes: number = 1): void {
-        const lockUntil = new Date();
-        lockUntil.setMinutes(lockUntil.getMinutes() + durationMinutes);
-
+    private lockMessageSending(messageId: number): void {
         const lock: MessageLock = {
             isLocked: true,
-            lockedUntil: lockUntil.toISOString(),
             reason: 'scheduled_message_sending',
             scheduledMessageId: messageId
         };
 
         this.writeMessageLock(lock);
-        console.log(`Message sending locked for ${durationMinutes} minute(s) due to scheduled message ${messageId}`);
-
-        // Auto-unlock after the specified duration
-        setTimeout(() => {
-            this.unlockMessageSending();
-        }, durationMinutes * 60 * 1000);
+        console.log(`Message sending locked due to scheduled message ${messageId}`);
     }
 
     private unlockMessageSending(): void {
@@ -203,23 +194,23 @@ class SchedulingService {
 
             console.log(`Preparing to send scheduled message ${message.id}: "${message.content.substring(0, 50)}..."`);            
             
-            // Create notification 30 seconds before sending
+            // Get notification time from settings (default 30 seconds)
+            const notificationTime = settings.notificationTime || 30;
+            
+            // Create notification before sending
             createNotification({
                 type: 'scheduled_message_alert',
                 title: 'Scheduled Message Alert',
-                message: `A scheduled message will be sent in 30 seconds: "${message.content.substring(0, 100)}${message.content.length > 100 ? '...' : ''}". Message sending will be locked during this time.`,
+                message: `A scheduled message will be sent in ${notificationTime} seconds: "${message.content.substring(0, 100)}${message.content.length > 100 ? '...' : ''}}". Message sending will be locked during this time.`,
                 scheduledMessageId: message.id.toString(),
-                timeUntilSend: 30
+                timeUntilSend: notificationTime
             });
             
-            // Wait 30 seconds before sending (notification period)
-            await new Promise(resolve => setTimeout(resolve, 30000));
+            // Wait for notification period
+            await new Promise(resolve => setTimeout(resolve, notificationTime * 1000));
 
-            // Lock message sending for 1 minute before sending
-            this.lockMessageSending(message.id, 1);
-
-            // Wait 1 minute before sending
-            await new Promise(resolve => setTimeout(resolve, 60000));
+            // Lock message sending before sending
+            this.lockMessageSending(message.id);
 
             // Get all users from database
             const users = await databaseService.query('SELECT * FROM users WHERE is_active = 1');
@@ -230,17 +221,20 @@ class SchedulingService {
                 return false;
             }
 
+            let whatsappSuccess = false;
+            let telegramSuccess = false;
+
             // Send to WhatsApp if enabled
             if (settings.sendToWhatsApp) {
                 try {
                     const phoneNumbers = users.filter((user: any) => user.phone).map((user: any) => user.phone);
                     if (phoneNumbers.length > 0) {
                         await whatsappService.sendMessages(phoneNumbers, message.content);
-                        console.log(`Scheduled message sent to ${phoneNumbers.length} WhatsApp numbers`);
+                        console.log(`✓ Scheduled message sent successfully to ${phoneNumbers.length} WhatsApp numbers`);
+                        whatsappSuccess = true;
                     }
-                    success = true;
                 } catch (error) {
-                    console.error('Error sending scheduled message via WhatsApp:', error);
+                    console.error('✗ Error sending scheduled message via WhatsApp:', error);
                 }
             }
 
@@ -250,17 +244,26 @@ class SchedulingService {
                     for (const user of users) {
                         if ((user as any).telegram_id) {
                             await telegramService.sendMessage(message.content);
-                            console.log(`Scheduled message sent to Telegram: ${(user as any).telegram_id}`);
+                            console.log(`✓ Scheduled message sent successfully to Telegram: ${(user as any).telegram_id}`);
                         }
                     }
-                    success = true;
+                    telegramSuccess = true;
                 } catch (error) {
-                    console.error('Error sending scheduled message via Telegram:', error);
+                    console.error('✗ Error sending scheduled message via Telegram:', error);
                 }
             }
 
-            // Unlock message sending after successful delivery
+            // Determine overall success
+            success = (settings.sendToWhatsApp ? whatsappSuccess : true) && (settings.sendToTelegram ? telegramSuccess : true);
+
+            // Unlock message sending immediately after delivery attempt
             this.unlockMessageSending();
+            
+            if (success) {
+                console.log(`✓ Scheduled message ${message.id} sent successfully and unlocked immediately`);
+            } else {
+                console.log(`✗ Scheduled message ${message.id} failed to send, but unlocked for retry`);
+            }
 
             return success;
         } catch (error) {

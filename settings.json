@@ -3,6 +3,8 @@
   "sendToWhatsApp": true,
   "telegramSettings": true,
   "scheduleMessages": true,
+  "notificationTime": 30,
+  "lockDuration": 60000,
   "batchSize": 10,
   "telegramConfig": {
     "botToken": "8278027059:AAGEH3PPqRNk-LPUPtV5wAUwdu4FXCXhR20",
