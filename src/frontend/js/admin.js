@@ -59,6 +59,11 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.addEventListener('click', () => {
                 const tabName = btn.getAttribute('data-tab');
                 
+                // Stop auto-update when switching away from scheduled messages
+                if (typeof stopAutoUpdate === 'function') {
+                    stopAutoUpdate();
+                }
+                
                 // Remove active class from all tabs and contents
                 tabBtns.forEach(b => b.classList.remove('active'));
                 tabContents.forEach(c => c.classList.remove('active'));
@@ -900,6 +905,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Scheduled Messages Functionality
+let scheduledMessagesAutoUpdate = null;
+
 function initScheduledMessages() {
     const addScheduledMessageBtn = document.getElementById('add-scheduled-message');
     const scheduledMessageModal = document.getElementById('scheduled-message-modal');
@@ -910,12 +917,23 @@ function initScheduledMessages() {
     if (!addScheduledMessageBtn) return;
     
     // Load scheduled messages when tab is opened
-    document.querySelector('[data-tab="scheduled-messages"]').addEventListener('click', loadScheduledMessages);
+    document.querySelector('[data-tab="scheduled-messages"]').addEventListener('click', () => {
+        loadScheduledMessages();
+        startAutoUpdate();
+    });
     
     // Add new scheduled message
     addScheduledMessageBtn.addEventListener('click', () => {
         openScheduledMessageModal();
     });
+    
+    // Manual refresh button
+    const refreshBtn = document.getElementById('refresh-scheduled-messages');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', () => {
+            loadScheduledMessages();
+        });
+    }
     
     // Handle times per day change
     timesPerDayInput.addEventListener('change', updateTimeSlots);
@@ -935,6 +953,45 @@ function initScheduledMessages() {
             closeScheduledMessageModal();
         }
     });
+}
+
+function startAutoUpdate() {
+    // Clear existing interval if any
+    if (scheduledMessagesAutoUpdate) {
+        clearInterval(scheduledMessagesAutoUpdate);
+    }
+    
+    // Show auto-update status
+    const statusIndicator = document.getElementById('auto-update-status');
+    if (statusIndicator) {
+        statusIndicator.style.display = 'flex';
+        statusIndicator.classList.remove('inactive');
+        statusIndicator.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> تحديث تلقائي نشط';
+    }
+    
+    // Start auto-update every 5 seconds
+    scheduledMessagesAutoUpdate = setInterval(() => {
+        // Only update if we're still on the scheduled messages tab
+        const activeTab = document.querySelector('.tab-content.active');
+        if (activeTab && activeTab.id === 'scheduled-messages-tab') {
+            loadScheduledMessages();
+        } else {
+            stopAutoUpdate();
+        }
+    }, 5000);
+}
+
+function stopAutoUpdate() {
+    if (scheduledMessagesAutoUpdate) {
+        clearInterval(scheduledMessagesAutoUpdate);
+        scheduledMessagesAutoUpdate = null;
+    }
+    
+    // Hide auto-update status
+    const statusIndicator = document.getElementById('auto-update-status');
+    if (statusIndicator) {
+        statusIndicator.style.display = 'none';
+    }
 }
 
 async function loadScheduledMessages() {
@@ -1033,6 +1090,12 @@ function getStatusText(status) {
 
 function openScheduledMessageModal(messageId = null) {
     const modal = document.getElementById('scheduled-message-modal');
+    
+    // Prevent opening if modal is already open
+    if (modal.style.display === 'block') {
+        return;
+    }
+    
     const form = document.getElementById('scheduled-message-form');
     const title = document.getElementById('scheduled-message-modal-title');
     
@@ -1060,6 +1123,16 @@ function openScheduledMessageModal(messageId = null) {
 
 function closeScheduledMessageModal() {
     const modal = document.getElementById('scheduled-message-modal');
+    const form = document.getElementById('scheduled-message-form');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    
+    // Reset form and button state
+    form.reset();
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-save"></i> حفظ الرسالة المجدولة';
+    }
+    
     modal.style.display = 'none';
 }
 
@@ -1154,6 +1227,12 @@ function updateRemoveButtonsVisibility() {
 async function handleScheduledMessageSubmit(e) {
     e.preventDefault();
     
+    // Prevent multiple submissions
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    if (submitBtn.disabled) return;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+    
     const formData = new FormData(e.target);
     const messageId = document.getElementById('scheduled-message-id').value;
     
@@ -1193,6 +1272,10 @@ async function handleScheduledMessageSubmit(e) {
     } catch (error) {
         console.error('Error saving scheduled message:', error);
         showMessage('خطأ في الاتصال بالخادم', 'error');
+    } finally {
+        // Re-enable submit button
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-save"></i> حفظ الرسالة المجدولة';
     }
 }
 
@@ -1264,7 +1347,7 @@ function initNotifications() {
 
 async function loadNotifications() {
     try {
-        const response = await fetch(`${API_BASE_URL}/notifications`, {
+        const response = await fetch('/api/notifications', {
             credentials: 'include'
         });
         
@@ -1334,7 +1417,7 @@ function closeNotificationDropdown() {
 
 async function markNotificationRead(notificationId) {
     try {
-        const response = await fetch(`${API_BASE_URL}/notifications/${notificationId}/read`, {
+        const response = await fetch(`/api/notifications/${notificationId}/read`, {
             method: 'PATCH',
             credentials: 'include'
         });
@@ -1351,7 +1434,7 @@ async function markNotificationRead(notificationId) {
 
 async function markAllNotificationsRead() {
     try {
-        const response = await fetch(`${API_BASE_URL}/notifications/mark-all-read`, {
+        const response = await fetch('/api/notifications/mark-all-read', {
             method: 'PATCH',
             credentials: 'include'
         });

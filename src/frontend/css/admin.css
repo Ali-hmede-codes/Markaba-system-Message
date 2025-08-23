@@ -1621,6 +1621,34 @@ body.admin-page .form-control:hover {
     padding: var(--space-4);
 }
 
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.auto-update-status {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: 0.875rem;
+    color: var(--success-600);
+    background: var(--success-50);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--success-200);
+}
+
+.auto-update-status.inactive {
+    color: var(--text-muted);
+    background: var(--background-secondary);
+    border-color: var(--border-light);
+}
+
+.auto-update-status i {
+    font-size: 0.75rem;
+}
+
 .scheduled-messages-list {
     display: flex;
     flex-direction: column;
