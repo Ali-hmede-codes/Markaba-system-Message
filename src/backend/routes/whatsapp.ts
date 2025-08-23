@@ -193,7 +193,11 @@ router.post('/send', upload.single('media'), async (req: Request, res: Response)
   let messageFingerprint: string | null = null;
   
   try {
-    let { groupIds, message, batchSize = 3 } = req.body;
+    let { groupIds, message } = req.body;
+    
+    // Read batch size from settings instead of request body
+    const settings = readSettings();
+    const batchSize = settings.batchSize || 10;
     const mediaFile = req.file;
     
     console.log('Received send request:', {
@@ -213,10 +217,7 @@ router.post('/send', upload.single('media'), async (req: Request, res: Response)
       }
     }
     
-    // Parse batchSize if it's a string (from FormData)
-    if (typeof batchSize === 'string') {
-      batchSize = parseInt(batchSize, 10) || 3;
-    }
+    // Batch size is now controlled from admin settings only
     
     if (!groupIds || !Array.isArray(groupIds) || groupIds.length === 0) {
       return res.status(400).json({ success: false, message: 'No groups selected' });
@@ -241,8 +242,7 @@ router.post('/send', upload.single('media'), async (req: Request, res: Response)
     // Start batch processing to prevent duplicates
     startBatchProcessing(messageFingerprint, message, groupIds);
     
-    // Read current settings
-    const settings = readSettings();
+    // Settings already read above for batch size
     
     let whatsappResults;
     let telegramResult = null;
@@ -329,7 +329,11 @@ router.post('/send-text', async (req: Request, res: Response) => {
   let messageFingerprint: string | null = null;
   
   try {
-    const { groupIds, message, batchSize = 3 } = req.body;
+    const { groupIds, message } = req.body;
+    
+    // Read batch size from settings instead of request body
+    const settings = readSettings();
+    const batchSize = settings.batchSize || 10;
     
     if (!groupIds || !Array.isArray(groupIds) || groupIds.length === 0) {
       return res.status(400).json({ success: false, message: 'No groups selected' });

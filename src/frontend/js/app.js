@@ -891,7 +891,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const message = messageInput.value.trim();
       const selectedGroups = Array.from(document.querySelectorAll('#groups-list input[type="checkbox"]:checked'))
         .map(checkbox => checkbox.value);
-      const batchSize = parseInt(document.getElementById('batch-size').value) || 5;
+      // Batch size is now controlled from admin settings
       const hasMedia = selectedFile !== null;
       
       // Create unique message fingerprint
@@ -949,7 +949,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       showSendStatus('Preparing to send message...', '');
       
-      const totalBatches = Math.ceil(selectedGroups.length / batchSize);
+      // Batch calculation will be handled by backend based on admin settings
       
       // Show progress bar only when batch processing starts
       const progressContainer = document.getElementById('batch-progress');
@@ -960,8 +960,8 @@ document.addEventListener('DOMContentLoaded', () => {
       progressContainer.style.display = 'block';
       progressContainer.offsetHeight; // Trigger reflow for mobile
       
-      // Update progress bar with batch information
-      progressText.textContent = `Preparing batches... (${selectedGroups.length} groups, ${totalBatches} batches)`;
+      // Update progress bar with group information
+      progressText.textContent = `Preparing to send to ${selectedGroups.length} groups...`;
       progressFill.style.width = '10%'; // Show preparation progress
       
       // Small delay to ensure progress bar is visible before starting
@@ -971,7 +971,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const formData = new FormData();
       formData.append('groupIds', JSON.stringify(selectedGroups));
       formData.append('message', message);
-      formData.append('batchSize', batchSize.toString());
+      // Batch size is controlled from admin settings, not sent from frontend
       
       if (selectedFile) {
         formData.append('media', selectedFile);
