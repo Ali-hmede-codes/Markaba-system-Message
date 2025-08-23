@@ -113,12 +113,13 @@ document.addEventListener('DOMContentLoaded', () => {
                           !groupsList.innerHTML.includes('Loading') && 
                           !groupsList.innerHTML.includes('loading');
     
-    // Only show loading screen if no data exists
-    if (loadingScreen && !hasExistingGroups && !hasGroupsInDOM) {
+    // Only show loading screen if WhatsApp is authenticated AND no data exists
+    // This prevents showing loading screen when WhatsApp is not connected
+    if (loadingScreen && isAuthenticated && !hasExistingGroups && !hasGroupsInDOM) {
       showLoadingScreen();
       checkWifiStatus();
     } else {
-      // Data already exists, mark as loaded
+      // Either not authenticated or data already exists, mark as loaded
       isDataLoaded = true;
       if (loadingScreen) {
         loadingScreen.style.display = 'none';
@@ -313,9 +314,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Functions
   async function init() {
     try {
-      // Initialize loading screen first
-      initializeLoadingScreen();
-      
       // Check user authentication and role
       await checkUserRole();
       
@@ -329,6 +327,9 @@ document.addEventListener('DOMContentLoaded', () => {
       isAuthenticated = data.connected;
       
       console.log('Initial WhatsApp status:', { isConnected, authState, isAuthenticated });
+      
+      // Initialize loading screen after getting authentication status
+      initializeLoadingScreen();
       
       updateUI();
       
