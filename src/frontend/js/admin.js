@@ -561,6 +561,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const data = await response.json();
             
+            if (response.status === 423) {
+                showMessage('إرسال الرسائل مؤقتاً مغلق. جاري معالجة الرسائل المجدولة. يرجى المحاولة مرة أخرى بعد قليل.', 'warning');
+                return;
+            }
+            
             if (data.success) {
                 showMessage('تم إرسال الرسالة بنجاح', 'success');
                 messageForm.reset();

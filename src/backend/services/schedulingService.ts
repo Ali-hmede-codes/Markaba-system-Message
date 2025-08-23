@@ -1,6 +1,6 @@
 import cron from 'node-cron';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import { createNotification } from '../routes/notifications';
 import whatsappService from './whatsappService';
 import telegramService from './telegramService';
@@ -133,7 +133,7 @@ class SchedulingService {
         console.log('Message sending unlocked');
     }
 
-    private isMessageSendingLocked(): boolean {
+    public isMessageSendingLocked(): boolean {
         const lock = this.readMessageLock();
         if (!lock.isLocked) {
             return false;

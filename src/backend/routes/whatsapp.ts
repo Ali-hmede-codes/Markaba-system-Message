@@ -1,10 +1,11 @@
 import * as express from 'express';
 import { Router, Request, Response } from 'express';
-import multer from 'multer';
+import multer = require('multer');
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import whatsappService from '../services/whatsappService';
 import telegramService from '../services/telegramService';
+import schedulingService from '../services/schedulingService';
 import { createFileValidationRegex, isFileTypeSupported } from '../config/mediaTypes';
 
 // Backend duplicate prevention
@@ -193,6 +194,14 @@ router.post('/send', upload.single('media'), async (req: Request, res: Response)
   let messageFingerprint: string | null = null;
   
   try {
+    // Check if message sending is locked by scheduled messages
+    if (await schedulingService.isMessageSendingLocked()) {
+      return res.status(423).json({ 
+        success: false,
+        message: 'Message sending is temporarily locked. Scheduled messages are being processed. Please try again in a moment.' 
+      });
+    }
+
     let { groupIds, message, batchSize = 3 } = req.body;
     const mediaFile = req.file;
     
@@ -329,6 +338,14 @@ router.post('/send-text', async (req: Request, res: Response) => {
   let messageFingerprint: string | null = null;
   
   try {
+    // Check if message sending is locked by scheduled messages
+    if (await schedulingService.isMessageSendingLocked()) {
+      return res.status(423).json({ 
+        success: false,
+        message: 'Message sending is temporarily locked. Scheduled messages are being processed. Please try again in a moment.' 
+      });
+    }
+
     const { groupIds, message, batchSize = 3 } = req.body;
     
     if (!groupIds || !Array.isArray(groupIds) || groupIds.length === 0) {

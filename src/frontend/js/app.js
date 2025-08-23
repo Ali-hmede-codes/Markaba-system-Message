@@ -997,6 +997,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const groupData = await groupResponse.json();
       let groupSuccess = false;
       
+      if (groupResponse.status === 423) {
+        // Handle message sending locked by scheduled messages
+        progressContainer.style.display = 'none';
+        showSendStatus('Message sending is temporarily locked. Scheduled messages are being processed. Please try again in a moment.', 'warning');
+        return;
+      }
+      
       if (groupResponse.ok && groupData.success) {
         groupSuccess = true;
         
