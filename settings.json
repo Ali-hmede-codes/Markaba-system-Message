@@ -2,10 +2,20 @@
   "sendToTelegram": false,
   "sendToWhatsApp": true,
   "telegramSettings": false,
-  "batchSize": 10,
+  "scheduledMessages": false,
+  "batchSize": 5,
+  "scheduledMessageSettings": {
+    "enabled": false,
+    "checkInterval": 60000
+  },
   "telegramConfig": {
     "botToken": "8278027059:AAGEH3PPqRNk-LPUPtV5wAUwdu4FXCXhR20",
     "channelId": "-1002501346263",
     "userId": "989228365"
+  },
+  "cleanupSettings": {
+    "enabled": true,
+    "interval": 86400000,
+    "description": "Cleanup expired messages and media files every 24 hours (86400000ms)"
   }
 }

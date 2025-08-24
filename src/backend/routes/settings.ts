@@ -23,7 +23,7 @@ router.post('/', checkAuth, async (req: Request, res: Response) => {
   try {
     const updates = req.body;
     // Validate updates
-    const validKeys = ['sendToTelegram', 'sendToWhatsApp', 'telegramSettings', 'batchSize', 'telegramConfig'];
+    const validKeys = ['sendToTelegram', 'sendToWhatsApp', 'telegramSettings', 'batchSize', 'telegramConfig', 'cleanupSettings'];
     for (const key in updates) {
       if (!validKeys.includes(key)) {
         return res.status(400).json({ success: false, message: `Invalid setting key: ${key}` });
@@ -40,7 +40,16 @@ router.post('/', checkAuth, async (req: Request, res: Response) => {
           return res.status(400).json({ success: false, message: 'telegramConfig must contain botToken, channelId, and userId as strings' });
         }
       }
-      if (key !== 'batchSize' && key !== 'telegramConfig' && typeof updates[key] !== 'boolean') {
+      if (key === 'cleanupSettings') {
+        if (typeof updates[key] !== 'object' || updates[key] === null) {
+          return res.status(400).json({ success: false, message: 'cleanupSettings must be an object' });
+        }
+        const config = updates[key];
+        if (typeof config.enabled !== 'boolean' || typeof config.interval !== 'number') {
+          return res.status(400).json({ success: false, message: 'cleanupSettings must contain enabled (boolean) and interval (number)' });
+        }
+      }
+      if (key !== 'batchSize' && key !== 'telegramConfig' && key !== 'cleanupSettings' && typeof updates[key] !== 'boolean') {
         return res.status(400).json({ success: false, message: `${key} must be a boolean` });
       }
     }
